@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Alkahest.Streams.Extensions.FluentStorage</PackageId>
+    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
+    <Title>Alkahest.Streams.Extensions.FluentStorage</Title>
+    <Description>FluentStorage extension for Alkahest.Streams. Provides integration with stream processing pipelines in FluentStorage sinks.</Description>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;FluentStorage;S3;Object Storage</PackageTags>
+    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Alkahest.Streams" Version="1.0.0.260125-rc-04" />
+  </ItemGroup>
+
+</Project>
