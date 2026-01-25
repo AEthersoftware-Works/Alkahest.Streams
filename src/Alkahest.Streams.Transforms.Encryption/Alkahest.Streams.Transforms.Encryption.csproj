@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Alkahest.Streams.Transforms.Encryption</PackageId>
+    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
+    <Title>Alkahest.Streams.Transforms.Encryption</Title>
+    <Description>Encryption transform for Alkahest.Streams. Provides AES-based stream encryption and decryption handlers for secure data pipelines.</Description>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Encryption;Aes;</PackageTags>
+    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Alkahest.Streams" Version="1.0.0.260125-rc-04" />
+  </ItemGroup>
+
+</Project>
