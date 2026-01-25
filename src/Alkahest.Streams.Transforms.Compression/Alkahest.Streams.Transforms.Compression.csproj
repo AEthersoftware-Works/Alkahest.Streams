@@ -15,8 +15,11 @@
 </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Alkahest.Streams" Version="1.0.0.260125-rc-04" />
     <PackageReference Include="NativeCompressions" Version="0.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />
   </ItemGroup>
 
 </Project>

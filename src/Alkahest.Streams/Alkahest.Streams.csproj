@@ -16,6 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Alkahest.Streams.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="../../assets/alkahest-streams-nuget.png" Pack="true" PackagePath="" Visible="false">
       <Pack>True</Pack>
     </None>
