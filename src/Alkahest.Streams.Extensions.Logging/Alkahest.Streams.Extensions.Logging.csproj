@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Alkahest.Streams.Extensions.Logging</PackageId>
+    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
+    <Title>Alkahest.Streams.Extensions.Logging</Title>
+    <Description>Logging extensions for Alkahest.Streams. Provides logging integration for stream processing pipelines in .NET applications.</Description>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Compression;Encryption;Logging;DI;Dependency Injection;</PackageTags>
+    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Alkahest.Streams" Version="1.0.0.260125-rc-04" />
+  </ItemGroup>
+
+</Project>

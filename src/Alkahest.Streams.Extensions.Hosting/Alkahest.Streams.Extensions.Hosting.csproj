@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Alkahest.Streams.Extensions.Hosting</PackageId>
+    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
+    <Title>Alkahest.Streams.Extensions.Hosting</Title>
+    <Description>Hosting extensions for Alkahest.Streams. Provides dependency injection and hosting integration for stream processing in .NET applications.</Description>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Compression;Encryption;Hosting;DI;Dependency Injection;</PackageTags>
+    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Alkahest.Streams" Version="1.0.0.260125-rc-04" />
+  </ItemGroup>
+
+</Project>
