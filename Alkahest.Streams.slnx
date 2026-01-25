@@ -1,0 +1,40 @@
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="src/Alkahest.Streams/Alkahest.Streams.csproj" />
+    <Project Path="test/Alkahest.Streams.Tests/Alkahest.Streams.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Extensions/" />
+  <Folder Name="/Extensions/FluentStorage/">
+    <Project Path="src/Alkahest.Streams.Extensions.FluentStorage/Alkahest.Streams.Extensions.FluentStorage.csproj" />
+    <Project Path="test/Alkahest.Streams.Extensions.FluentStorage.Tests/Alkahest.Streams.Extensions.FluentStorage.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Extensions/Hosting/">
+    <Project Path="src/Alkahest.Streams.Extensions.Hosting/Alkahest.Streams.Extensions.Hosting.csproj" />
+    <Project Path="test/Alkahest.Streams.Extensions.Hosting.Tests/Alkahest.Streams.Extensions.Hosting.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Extensions/Logging/">
+    <Project Path="src/Alkahest.Streams.Extensions.Logging/Alkahest.Streams.Extensions.Logging.csproj" />
+    <Project Path="test/Alkahest.Streams.Extensions.Logging.Tests/Alkahest.Streams.Extensions.Logging.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Extensions/OpenTelemetry/">
+    <Project Path="src/Alkahest.Streams.Extensions.OpenTelemetry/Alkahest.Streams.Extensions.OpenTelemetry.csproj" />
+    <Project Path="test/Alkahest.Streams.Extensions.OpenTelemetry.Tests/Alkahest.Streams.Extensions.OpenTelemetry.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Transforms/" />
+  <Folder Name="/Transforms/Compression/">
+    <Project Path="src/Alkahest.Streams.Transforms.Compression/Alkahest.Streams.Transforms.Compression.csproj" />
+    <Project Path="test/Alkahest.Streams.Transforms.Compression.Tests/Alkahest.Streams.Transforms.Compression.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Transforms/Encryption/">
+    <Project Path="src/Alkahest.Streams.Transforms.Encryption/Alkahest.Streams.Transforms.Encryption.csproj" />
+    <Project Path="test/Alkahest.Streams.Transforms.Encryption.Tests/Alkahest.Streams.Transforms.Encryption.Tests.csproj" />
+  </Folder>
+  <Folder Name="/.Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Version.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

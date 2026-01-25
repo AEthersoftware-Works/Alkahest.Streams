@@ -1,0 +1,10 @@
+<Project>
+    <Target Name="EnsureCoreBuildsFirst" BeforeTargets="Build" Condition="'$(MSBuildProjectFile)' != 'Alkahest.Streams.csproj'">
+        <MSBuild Projects="$(MSBuildThisFileDirectory)/src/Alkahest.Streams/Alkahest.Streams.csproj" Targets="Build;Pack;Publish" />
+    </Target>
+
+    <Target Name="PublishNuGetLocally" DependsOnTargets="Pack" AfterTargets="Build" Condition="('$(Configuration)' == 'Debug' Or '$(Configuration)' == 'Release') And !$(MSBuildProjectFile.Contains('Test')) And !$(MSBuildProjectDirectory.Contains('/test/'))">
+        <Message Text="Publishing NuGet package to: $(NUGET_DEFAULT_PUSH_SOURCE)" Importance="High" />
+        <Exec Command="dotnet nuget push &quot;$(MSBuildProjectDirectory)/$(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg&quot; --skip-duplicate" />
+    </Target>
+</Project>

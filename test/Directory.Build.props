@@ -1,0 +1,6 @@
+<Project>
+<PropertyGroup>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+</PropertyGroup>
+</Project>
