@@ -1,5 +1,7 @@
 namespace Alkahest.Streams;
 
+using Transforms.Encryption;
+
 public static class EncryptionTransformBuilderExtensions
 {
     extension(ITransformBuilder builder)
