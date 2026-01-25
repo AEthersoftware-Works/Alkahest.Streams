@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+  </PropertyGroup>
+
+<PropertyGroup>
+  <PackageId>Alkahest.Streams.Transforms.Compression</PackageId>
+  <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
+  <Title>Alkahest.Streams.Transforms.Compression</Title>
+  <Description>Compression transform for Alkahest.Streams. Provides GZip, Brotli, and Zstd stream compression and decompression handlers for efficient data pipelines.</Description>
+  <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Compression;Gzip;Brotli;Zstd;</PackageTags>
+  <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Alkahest.Streams" Version="1.0.0.260125-rc-04" />
+    <PackageReference Include="NativeCompressions" Version="0.6.0" />
+  </ItemGroup>
+
+</Project>
