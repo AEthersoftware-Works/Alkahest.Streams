@@ -6,7 +6,7 @@ namespace Alkahest.Streams.Performance;
 /// <param name="statsBefore">Performance statistics captured before handler processing.</param>
 /// <param name="statsAfter">Performance statistics captured after handler processing.</param>
 /// <param name="statsDelta">The performance statistics delta.</param>
-public class HandleStatsSummary(TransformStats? statsBefore, TransformStats? statsAfter, TransformStatsDelta? statsDelta)
+public class HandlerStatsSummary(TransformStats? statsBefore, TransformStats? statsAfter, TransformStatsDelta? statsDelta)
 {
     /// <summary>
     /// Gets the performance statistics before handler processing.

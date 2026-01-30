@@ -6,9 +6,36 @@
 	],
 	"settings": {
 		"cSpell.words": [
+			"Astc",
 			"baget",
+			"ciphertext",
+			"encryptor",
+			"exposable",
+			"fluentstorage",
+			"Jpegxl",
 			"netstandard",
-			"xunit"
+			"Resampler",
+			"Skia",
+			"Wbmp",
+			"xunit",
+			"Zstandard"
+		]
+	},
+	"extensions": {
+		"recommendations": [
+			"ryanluker.vscode-coverage-gutters",
+			"ms-dotnettools.vscode-dotnet-pack",
+			"aaron-bond.better-comments",
+			"ms-dotnettools.csdevkit",
+			"streetsidesoftware.code-spell-checker",
+			"icsharpcode.ilspy-vscode",
+			"patcx.vscode-nuget-gallery",
+			"ms-vscode.powershell",
+			"awwsky.regionmarker",
+			"sonarsource.sonarlint-vscode",
+			"hbenl.vscode-test-explorer",
+			"redhat.vscode-xml",
+			"sst-dev.opencode"
 		]
 	}
 }

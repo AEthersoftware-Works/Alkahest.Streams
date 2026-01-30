@@ -35,7 +35,7 @@ public class HandlerEndEventArgs(
     /// The handler performance stats.
     /// </summary>
     /// TODO: Change this argument in the constructor to simplify.
-    public HandleStatsSummary? Stats { get; init; } = new HandleStatsSummary(statsBefore, statsAfter, statsDelta);
+    public HandlerStatsSummary? Stats { get; init; } = new HandlerStatsSummary(statsBefore, statsAfter, statsDelta);
 
     /// <summary>
     /// Gets a value indicating whether the handler processing was successful.
@@ -46,5 +46,4 @@ public class HandlerEndEventArgs(
     /// Gets the last exception that occurred during handler processing, if any.
     /// </summary>
     public Exception? LastException { get; init; } = lastException;
-
 }

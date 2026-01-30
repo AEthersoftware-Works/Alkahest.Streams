@@ -1,116 +1,108 @@
 namespace Alkahest.Streams;
 
-using System.Diagnostics;
-using Alkahest.Streams.Events;
-
-/// <summary>
-/// Interface for building stream transformers with handlers and strategies.
-/// </summary>
-public interface ITransformBuilder
-{
-    /// <summary>
-    /// Adds a new handler of the specified type to the transformation chain.
-    /// </summary>
-    /// <typeparam name="THandler">The type of handler to add.</typeparam>
-    void AddStreamHandler<THandler>() where THandler : ITransformHandler, new();
-
-    /// <summary>
-    /// Adds a new handler of the specified type with configuration options to 
-    /// the transformation chain.
-    /// </summary>
-    /// <typeparam name="THandler">The type of handler to add.</typeparam>
-    /// <typeparam name="THandlerOptions">The type of handler configuration options.</typeparam>
-    /// <param name="options">The instance of handler configuration options.</param>
-    void AddStreamHandler<THandler,THandlerOptions>(THandlerOptions options) 
-        where THandler : ITransformHandler, new()
-        where THandlerOptions : class;
-
-    /// <summary>
-    /// Adds a handler and returns the builder for chaining.
-    /// </summary>
-    /// <typeparam name="THandler">The type of handler to add.</typeparam>
-    /// <returns>The builder instance for chaining.</returns>
-    ITransformBuilder ProcessWith<THandler>() where THandler : ITransformHandler, new();
-
-    /// <summary>
-    /// Sets the processing strategy for the transformer.
-    /// </summary>
-    /// <param name="strategy">The strategy to use.</param>
-    /// <returns>The builder instance for chaining.</returns>
-    ITransformBuilder UseStrategy(HandlerStrategy strategy);
-
-    /// <summary>
-    /// Builds the transformer with the configured handlers and strategy.
-    /// </summary>
-    /// <typeparam name="TStreamTransformer">The type of transformer to build.</typeparam>
-    /// <returns>The built transformer.</returns>
-    TStreamTransformer Build<TStreamTransformer>() where TStreamTransformer : Transformer, ITransformer, new();
-
-    /// <summary>
-    /// Builds a default stream transformer with the configured handlers and strategy.
-    /// </summary>
-    /// <returns>The built default stream transformer.</returns>
-    DefaultStreamTransformer Build();
-}
+using Events;
 
 /// <summary>
 /// Builder class for creating stream transformers.
 /// </summary>
 public class TransformBuilder : ITransformBuilder
 {
-    private const HandlerStrategy DefaultStrategy = HandlerStrategy.Auto;
-    private HandlerStrategy _strategy = DefaultStrategy;
-    private readonly List<ITransformHandler> _handlers = [];
-    private readonly List<EventHandler<TransformBeginEventArgs>> _transformBeginEventBindings = [];
-    private readonly List<EventHandler<HandlerBeginEventArgs>> _handlerBeginEventBindings = [];
-    private readonly List<EventHandler<HandlerEndEventArgs>> _handlerEndEventBindings = [];
-    private readonly List<EventHandler<TransformEndEventArgs>> _transformEndEventBindings = [];
+    /// <summary>
+    /// The default handler strategy used by the builder.
+    /// </summary>
+    protected const HandlerStrategy DefaultStrategy = HandlerStrategy.Auto;
 
     /// <summary>
-    /// Adds a new handler of the specified type to the transformation chain.
+    /// The current handler strategy configured for the transformer.
     /// </summary>
-    /// <typeparam name="THandler">The type of handler to add.</typeparam>
+    protected HandlerStrategy Strategy { get; set; } = DefaultStrategy;
+
+    /// <summary>
+    /// The list of transform handlers to be applied in sequence.
+    /// </summary>
+    protected List<ITransformHandler> Handlers { get; } = [];
+
+    /// <summary>
+    /// Event bindings for transform begin events.
+    /// </summary>
+    protected List<EventHandler<TransformBeginEventArgs>> TransformBeginEventBindings { get; } = [];
+
+    /// <summary>
+    /// Event bindings for handler begin events.
+    /// </summary>
+    protected List<EventHandler<HandlerBeginEventArgs>> HandlerBeginEventBindings { get; } = [];
+
+    /// <summary>
+    /// Event bindings for handler end events.
+    /// </summary>
+    protected List<EventHandler<HandlerEndEventArgs>> HandlerEndEventBindings { get; } = [];
+
+    /// <summary>
+    /// Event bindings for transform end events.
+    /// </summary>
+    protected List<EventHandler<TransformEndEventArgs>> TransformEndEventBindings { get; } = [];
+
+    /// <inheritdoc/>
     public void AddStreamHandler<THandler>() where THandler : ITransformHandler, new()
     {
         var handler = new THandler();
-        _handlers.Add(handler);
+        Handlers.Add(handler);
     }
 
-    /// <summary>
-    /// Adds a new handler of the specified type with options to the transformation chain.
-    /// </summary>
-    /// <typeparam name="THandler">The type of handler to add.</typeparam>
-    /// <typeparam name="THandlerOptions">The type of options for the handler.</typeparam>
-    /// <param name="options">The options to configure the handler.</param>
+    /// <inheritdoc/>
     public void AddStreamHandler<THandler, THandlerOptions>(THandlerOptions options)
         where THandler : ITransformHandler, new()
-        where THandlerOptions : class
+        where THandlerOptions : new()
     {
         var handler = new THandler { Options = HandlerOptions.Create(options) };
-        _handlers.Add(handler);
+        Handlers.Add(handler);
     }
 
-    /// <summary>
-    /// Adds a handler and returns the builder for chaining.
-    /// </summary>
-    /// <typeparam name="THandler">The type of handler to add.</typeparam>
-    /// <returns>The builder instance for chaining.</returns>
+    /// <inheritdoc/>
+    public void AddStreamHandler<THandler, THandlerOptions>(Action<THandlerOptions>? configure = null)
+        where THandler : ITransformHandler, new()
+        where THandlerOptions : class, new()
+    {
+        var options = new THandlerOptions();
+        configure?.Invoke(options);
+
+        AddStreamHandler<THandler, THandlerOptions>(options);
+    }
+
+    /// <inheritdoc/>
     public ITransformBuilder ProcessWith<THandler>() where THandler : ITransformHandler, new()
     {
         AddStreamHandler<THandler>();
         return this;
     }
 
-    /// <summary>
-    /// Sets the processing strategy for the transformer.
-    /// </summary>
-    /// <param name="strategy">The strategy to use.</param>
-    /// <returns>The builder instance for chaining.</returns>
-    public ITransformBuilder UseStrategy(HandlerStrategy strategy)
+    /// <inheritdoc/>
+    public ITransformBuilder ProcessWith<THandler, THandlerOptions>(THandlerOptions options)
+        where THandler : ITransformHandler, new()
+        where THandlerOptions : new()
     {
-        _strategy = strategy;
+        AddStreamHandler<THandler, THandlerOptions>(options);
         return this;
     }
+
+    /// <inheritdoc/>
+    public ITransformBuilder ProcessWith<THandler, THandlerOptions>(Action<THandlerOptions>? configure = null)
+        where THandler : ITransformHandler, new()
+        where THandlerOptions : class, new()
+    {
+        AddStreamHandler<THandler, THandlerOptions>(configure);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ITransformBuilder UseStrategy(HandlerStrategy strategy)
+    {
+        Strategy = strategy;
+        return this;
+    }
+
+    // TODO: This is incredibly basic usage, it is optimal for telemetry to subscribe
+    //       to the metrics channel for non-blocking statistics data capture.
 
     /// <summary>
     /// Adds a telemetry event handler for transform end events.
@@ -119,7 +111,35 @@ public class TransformBuilder : ITransformBuilder
     /// <returns>The builder instance for chaining.</returns>
     public ITransformBuilder UseTelemetry(EventHandler<TransformEndEventArgs> action)
     {
-        _transformEndEventBindings.Add(action);
+        TransformEndEventBindings.Add(action);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ITransformBuilder AddTransformBeginEventListener(EventHandler<TransformBeginEventArgs> listener)
+    {
+        TransformBeginEventBindings.Add(listener);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ITransformBuilder AddHandlerBeginEventListener(EventHandler<HandlerBeginEventArgs> listener)
+    {
+        HandlerBeginEventBindings.Add(listener);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ITransformBuilder AddHandlerEndEventListener(EventHandler<HandlerEndEventArgs> listener)
+    {
+        HandlerEndEventBindings.Add(listener);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ITransformBuilder AddTransformEndEventListener(EventHandler<TransformEndEventArgs> listener)
+    {
+        TransformEndEventBindings.Add(listener);
         return this;
     }
 
@@ -130,17 +150,17 @@ public class TransformBuilder : ITransformBuilder
     protected void ApplyEventBindings(ITransformer transformer)
     {
         // Apply event bindings
-        foreach (var transformBeginEvent in _transformBeginEventBindings)
-            transformer.TransformProcessBegin += transformBeginEvent;
+        foreach (var transformBeginEventListener in TransformBeginEventBindings)
+            transformer.TransformProcessBegin += transformBeginEventListener;
 
-        foreach (var handlerBeginEvent in _handlerBeginEventBindings)
-            transformer.HandlerProcessBegin += handlerBeginEvent;
+        foreach (var handlerBeginEventListener in HandlerBeginEventBindings)
+            transformer.HandlerProcessBegin += handlerBeginEventListener;
 
-        foreach (var handlerEndEvent in _handlerEndEventBindings)
-            transformer.HandlerProcessEnd += handlerEndEvent;
+        foreach (var handlerEndEventListener in HandlerEndEventBindings)
+            transformer.HandlerProcessEnd += handlerEndEventListener;
 
-        foreach (var transformEndEvent in _transformEndEventBindings)
-            transformer.TransformProcessEnd += transformEndEvent;
+        foreach (var transformEndEventListener in TransformEndEventBindings)
+            transformer.TransformProcessEnd += transformEndEventListener;
     }
 
     /// <summary>
@@ -150,14 +170,15 @@ public class TransformBuilder : ITransformBuilder
     /// <returns>The built transformer.</returns>
     public TStreamTransformer Build<TStreamTransformer>() where TStreamTransformer : Transformer, ITransformer, new()
     {
-        var transformer = _strategy == DefaultStrategy
-            ? TStreamTransformer.WithHandlers<TStreamTransformer>(_handlers)
-            : TStreamTransformer.WithHandlersAndStrategy<TStreamTransformer>(_handlers, _strategy);
+        var transformer = Strategy == DefaultStrategy
+            ? TStreamTransformer.WithHandlers<TStreamTransformer>(Handlers)
+            : TStreamTransformer.WithHandlersAndStrategy<TStreamTransformer>(Handlers, Strategy);
 
         ApplyEventBindings(transformer);
 
         return transformer;
     }
+
     /// <summary>
     /// Builds a default stream transformer with the configured handlers and strategy.
     /// </summary>

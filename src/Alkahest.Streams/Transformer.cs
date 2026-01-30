@@ -4,7 +4,6 @@ using System.IO.Pipelines;
 
 namespace Alkahest.Streams;
 
-using Events;
 using Performance;
 
 /// <summary>
@@ -99,77 +98,90 @@ public abstract partial class Transformer : ITransformer
             return;
         }
 
-        // Pre-allocate the list
-        HandlerDeltas = new HandlerStatsDeltaCollection(Handlers.Count);
-
         Stream current = input;
         long currentInputLength = totalBytesIn;
-        int handlerIdx = 0;
 
-        foreach (var handler in Handlers)
+        try
         {
-            var handlerStart = Stopwatch.StartNew();
+            // Pre-allocate the list
+            HandlerDeltas = new HandlerStatsDeltaCollection(Handlers.Count);
 
-            await NotifyHandlerStartAsync(handler, handlerIdx);
+            int handlerIdx = 0;
 
-            var handlerStatsBefore = CapturePerformanceStats(TimeSpan.Zero);
-
-            long handlerBytesIn = currentInputLength;
-
-            try
+            foreach (var handler in Handlers)
             {
-                // Starting with 256KB capacity to reduce resizes
-                using var tempOutput = new PooledMemoryStream(bufferSize * 4);
-                await handler.ProcessAsync(current, tempOutput);
+                var handlerStart = Stopwatch.StartNew();
 
-                long handlerBytesOut = tempOutput.Length;
-                totalBytesOut += handlerBytesOut;
+                await NotifyHandlerStartAsync(handler, handlerIdx);
 
-                var duration = handlerStart.Elapsed;
-                var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
-                var handlerStatsDelta = handlerStatsAfter - handlerStatsBefore;
+                var handlerStatsBefore = CapturePerformanceStats(TimeSpan.Zero);
 
-                HandlerDeltas.Add(handlerStatsDelta);
+                try
+                {
+                    // Starting with 256KB capacity to reduce resizes
+                    var tempOutput = new PooledMemoryStream(bufferSize * 4);
+                    await handler.ProcessAsync(current, tempOutput);
 
-                HandlerProcessEnd?.Invoke(this, new HandlerEndEventArgs(
-                    handlerName: handler.Name,
-                    handlerIndex: handlerIdx,
-                    duration: duration,
-                    bytesProcessed: handlerBytesOut,
-                    statsBefore: handlerStatsBefore,
-                    statsAfter: handlerStatsAfter,
-                    statsDelta: handlerStatsDelta));
+                    long handlerBytesOut = tempOutput.Length;
+                    totalBytesOut += handlerBytesOut;
 
-                tempOutput.Position = 0;
+                    var duration = handlerStart.Elapsed;
+                    var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
 
-                // Dispose previous stream.
-                if (current != input)
-                    await current.DisposeAsync();
+                    await NotifyHandlerEndAsync(
+                        handlerName: handler.Name,
+                        handlerIndex: handlerIdx,
+                        duration: duration,
+                        bytesProcessed: handlerBytesOut,
+                        statsBefore: handlerStatsBefore,
+                        statsAfter: handlerStatsAfter
+                    );
 
-                current = tempOutput;
-                currentInputLength = handlerBytesOut;
+                    tempOutput.Position = 0;
 
+                    // Dispose previous stream.
+                    if (current != input)
+                        await current.DisposeAsync();
+
+                    current = tempOutput;
+                    currentInputLength = handlerBytesOut;
+
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    var duration = handlerStart.Elapsed;
+                    var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
+
+                    await NotifyHandlerEndAsync(
+                        handlerName: handler.Name,
+                        handlerIndex: handlerIdx,
+                        duration: duration,
+                        bytesProcessed: -1,
+                        statsBefore: handlerStatsBefore,
+                        statsAfter: handlerStatsAfter,
+                        exception: lastError
+                    );
+
+                    throw;
+                }
+                handlerIdx++;
             }
-            catch (Exception ex)
-            {
-                lastError = ex;
-                var duration = handlerStart.Elapsed;
-                var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
-
-                await NotifyHandlerEndAsync(
-                    handlerName: handler.Name,
-                    handlerIndex: handlerIdx,
-                    duration: duration,
-                    bytesProcessed: -1,
-                    statsBefore: handlerStatsBefore,
-                    statsAfter: handlerStatsAfter
-                );
-
-                throw;
-            }
-
-            handlerIdx++;
         }
+        catch (Exception)
+        {
+            var totalDuration = startTime.Elapsed;
+
+            await NotifyTransformEndAsync(
+                totalDuration: totalDuration,
+                totalBytesIn: totalBytesIn,
+                totalBytesOut: totalBytesOut,
+                exception: lastError
+            );
+
+            throw;
+        }
+
         try
         {
             // Final copy to output using pooled buffer
@@ -189,7 +201,6 @@ public abstract partial class Transformer : ITransformer
             // Dispose the last intermediate stream
             if (current != input)
                 await current.DisposeAsync();
-
         }
     }
 
@@ -243,7 +254,11 @@ public abstract partial class Transformer : ITransformer
 
                     try
                     {
-                        await handler.ProcessAsync(currentInput, pipe.Writer.AsStream());
+                        var tempOutput = new TrackingStreamWriter(pipe.Writer.AsStream(true));
+                        await handler.ProcessAsync(currentInput, tempOutput);
+
+                        long handlerBytesOut = tempOutput.BytesWritten;
+                        totalBytesOut += handlerBytesOut;
 
                         var duration = handlerStart.Elapsed;
                         var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
@@ -252,7 +267,7 @@ public abstract partial class Transformer : ITransformer
                             handlerName: handler.Name,
                             handlerIndex: handlerIdx,
                             duration: duration,
-                            bytesProcessed: -1,
+                            bytesProcessed: handlerBytesOut,
                             statsBefore: handlerStatsBefore,
                             statsAfter: handlerStatsAfter
                         );
@@ -265,6 +280,7 @@ public abstract partial class Transformer : ITransformer
                     catch (Exception ex)
                     {
                         lastError = ex;
+                        
                         var duration = handlerStart.Elapsed;
                         var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
 
@@ -273,7 +289,7 @@ public abstract partial class Transformer : ITransformer
                             handlerIndex: handlerIdx,
                             duration: duration,
                             bytesProcessed: -1,
-                            exception: ex,
+                            exception: lastError,
                             statsBefore: handlerStatsBefore,
                             statsAfter: handlerStatsAfter
                         );
@@ -289,6 +305,15 @@ public abstract partial class Transformer : ITransformer
             catch (Exception ex)
             {
                 await pipe.Writer.CompleteAsync(ex);
+
+                var totalDuration = startTime.Elapsed;
+
+                await NotifyTransformEndAsync(
+                    totalDuration: totalDuration,
+                    totalBytesIn: totalBytesIn,
+                    totalBytesOut: totalBytesOut,
+                    exception: lastError
+                );
             }
         });
 

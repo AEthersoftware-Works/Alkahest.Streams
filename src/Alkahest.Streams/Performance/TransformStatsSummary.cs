@@ -7,7 +7,7 @@ namespace Alkahest.Streams.Performance;
 /// <param name="transformStats">The final performance statistics of the transform process.</param>
 /// <param name="handlerStatsAggregate">The computed overall performance statistics for all handlers.</param>
 /// <param name="statsDeltas">The performance statistics deltas captured for each handler.</param>
-public class TransformStatsSummary(TransformStats? transformStats, HandlerStatsAggregate? handlerStatsAggregate, HandlerStatsDeltaCollection? statsDeltas)
+public class TransformStatsSummary(TransformStats? transformStats, HandlerStatsAggregate? handlerStatsAggregate, List<TransformStatsDelta>? statsDeltas)
 {
 
     /// <summary>
@@ -23,5 +23,5 @@ public class TransformStatsSummary(TransformStats? transformStats, HandlerStatsA
     /// <summary>
     /// Gets the performance statistics captured for each handler.
     /// </summary>
-    public HandlerStatsDeltaCollection? HandlerStatsDeltas { get; init; } = statsDeltas;
+    public List<TransformStatsDelta>? HandlerStatsDeltas { get; init; } = statsDeltas;
 }

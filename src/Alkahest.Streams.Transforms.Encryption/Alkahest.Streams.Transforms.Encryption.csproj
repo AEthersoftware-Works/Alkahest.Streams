@@ -1,20 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>Alkahest.Streams.Transforms.Encryption</PackageId>
-    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
     <Title>Alkahest.Streams.Transforms.Encryption</Title>
+    <Product>Alkahest.Streams.Transforms.Encryption</Product>
     <Description>Encryption transform for Alkahest.Streams. Provides AES-based stream encryption and decryption handlers for secure data pipelines.</Description>
+    <Summary>Encryption transform for Alkahest.Streams. Provides AES-based stream encryption and decryption handlers for secure data pipelines.</Summary>
     <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Encryption;Aes;</PackageTags>
-    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+    <PackageIcon>alkahest-streams-transforms-encrypt-nuget.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../assets/alkahest-streams-transforms-encrypt-nuget.png" Pack="true" PackagePath="" Visible="false">
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />
   </ItemGroup>
+
 
 </Project>
