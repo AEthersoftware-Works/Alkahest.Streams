@@ -10,7 +10,7 @@ public interface IHandlerOptions
     /// <summary>
     /// Gets the value of the handler options.
     /// </summary>
-    object Value { get; }
+    object? Value { get; }
 }
 
 /// <summary>
@@ -18,14 +18,14 @@ public interface IHandlerOptions
 /// </summary>
 /// <typeparam name="THandlerOptions">The type of the handler options.</typeparam>
 public interface IHandlerOptions<[DynamicallyAccessedMembers(HandlerOptions.DynamicallyAccessedMembers)] out THandlerOptions> : IHandlerOptions
-    where THandlerOptions : class
+    //where THandlerOptions : class
 {
     /// <summary>
     /// Gets the typed value of the handler options.
     /// </summary>
-    new THandlerOptions Value { get; }
+    new THandlerOptions? Value { get; }
 
-    object IHandlerOptions.Value => Value;
+    object? IHandlerOptions.Value => Value;
 }
 
 /// <summary>
@@ -33,12 +33,12 @@ public interface IHandlerOptions<[DynamicallyAccessedMembers(HandlerOptions.Dyna
 /// </summary>
 /// <typeparam name="THandlerOptions">The type of the handler options.</typeparam>
 public class HandlerOptionsWrapper<[DynamicallyAccessedMembers(HandlerOptions.DynamicallyAccessedMembers)] THandlerOptions>(THandlerOptions options) : IHandlerOptions<THandlerOptions>
-    where THandlerOptions : class
+    //where THandlerOptions : class
 {
     /// <summary>
     /// Gets the wrapped handler options value.
     /// </summary>
-    public THandlerOptions Value { get; } = options;
+    public THandlerOptions? Value { get; } = options;
 }
 
 /// <summary>
@@ -60,7 +60,7 @@ public static class HandlerOptions
     /// <param name="options">The options object.</param>
     /// <returns>A handler options wrapper containing the specified options.</returns>
     public static IHandlerOptions<THandlerOptions> Create<[DynamicallyAccessedMembers(DynamicallyAccessedMembers)] THandlerOptions>(THandlerOptions options)
-    where THandlerOptions : class
+        // where THandlerOptions : class
     {
         return new HandlerOptionsWrapper<THandlerOptions>(options);
     }

@@ -1,5 +1,16 @@
 <Project>
     <PropertyGroup>
-        <VersionPrefix>1.0.0</VersionPrefix>
+        <BuildNumber>$(BuildID)</BuildNumber>
+        <Revision>$(Rev:rr)</Revision>
+
+        <BuildYear>$([System.DateTime]::Now.Year.ToString())</BuildYear>
+        <BuildMonth>$([System.DateTime]::Now.Month.ToString())</BuildMonth>
+
+        <!-- Fallbacks -->
+        <BuildNumber Condition="'$(BuildNumber)' == ''">$([System.DateTime]::Now.ToString('Mddhhmm'))</BuildNumber>
+        <Revision Condition="'$(Revision)' == ''">$([System.DateTime]::Now.ToString('HH'))</Revision>
+        
+        <VersionPrefix>$(BuildYear).$(BuildMonth).0</VersionPrefix>
+        <VersionSuffix>alpha-$(BuildNumber)</VersionSuffix>
     </PropertyGroup>
 </Project>

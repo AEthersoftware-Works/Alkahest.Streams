@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        { 
+          "files": ["src/**/*.csproj"],
+          "exclude": ["**/bin/**", "**/obj/**", "**/node_modules/**"]
+      }
+      ],
+      "dest": "obj/api"
+    }
+  ],
+  "build": {
+    "content": [
+      { 
+        "files": ["obj/api/**.yml", "docs/alkahest-docs/docs/**.md"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["assets/**", "docs/alhakest-docs/static/img/**"]
+      }
+    ],
+    "output": "docs/alkahest-docs/docs/api",
+    "globalNamespaceId": "Global",
+    "template": "default",
+    "markdownEngine": "markdig"
+  }
+}

@@ -160,6 +160,7 @@ public abstract partial class Transformer : ITransformer
     {
         var totalStats = CapturePerformanceStats(totalDuration, totalBytesIn, totalBytesOut);
         var aggregates = HandlerDeltas?.ComputeAggregates();
+        var deltas = HandlerDeltas?.ToList() ?? [];
 
         var args = new TransformEndEventArgs(
             totalDuration,
@@ -168,7 +169,7 @@ public abstract partial class Transformer : ITransformer
             exception,
             totalStats,
             aggregates,
-            HandlerDeltas);
+            deltas);
 
         MetricsChannel.Writer.TryWrite(args);
         

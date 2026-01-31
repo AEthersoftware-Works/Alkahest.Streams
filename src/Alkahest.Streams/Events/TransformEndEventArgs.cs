@@ -12,7 +12,7 @@ public class TransformEndEventArgs(
     Exception? lastException = null,
     TransformStats? stats = null,
     HandlerStatsAggregate? handlerStatsAggregate = null,
-    HandlerStatsDeltaCollection? statsDeltas = null) : TransformEventArgs
+    List<TransformStatsDelta>? statsDeltas = null) : TransformEventArgs
 {
     /// <summary>
     /// Gets the timestamp when the transform ended.

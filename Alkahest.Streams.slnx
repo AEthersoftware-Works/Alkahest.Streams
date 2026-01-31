@@ -1,4 +1,15 @@
 <Solution>
+  <Folder Name="/.Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Version.props" />
+    <File Path="docfx.json" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="test/Directory.Build.props" />
+  </Folder>
   <Folder Name="/Core/">
     <Project Path="src/Alkahest.Streams/Alkahest.Streams.csproj" />
     <Project Path="test/Alkahest.Streams.Tests/Alkahest.Streams.Tests.csproj" />
@@ -16,9 +27,17 @@
     <Project Path="src/Alkahest.Streams.Extensions.Logging/Alkahest.Streams.Extensions.Logging.csproj" />
     <Project Path="test/Alkahest.Streams.Extensions.Logging.Tests/Alkahest.Streams.Extensions.Logging.Tests.csproj" />
   </Folder>
+  <Folder Name="/Extensions/NativeCompressions/">
+    <Project Path="src/Alkahest.Streams.Extensions.NativeCompressions/Alkahest.Streams.Extensions.NativeCompressions.csproj" />
+    <Project Path="test/Alkahest.Streams.Extensions.NativeCompressions.Tests/Alkahest.Streams.Extensions.NativeCompressions.Tests.csproj" />
+  </Folder>
   <Folder Name="/Extensions/OpenTelemetry/">
     <Project Path="src/Alkahest.Streams.Extensions.OpenTelemetry/Alkahest.Streams.Extensions.OpenTelemetry.csproj" />
     <Project Path="test/Alkahest.Streams.Extensions.OpenTelemetry.Tests/Alkahest.Streams.Extensions.OpenTelemetry.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Extensions/SkiaSharp/">
+    <Project Path="src/Alkahest.Streams.Extensions.SkiaSharp/Alkahest.Streams.Extensions.SkiaSharp.csproj" />
+    <Project Path="test/Alkahest.Streams.Extensions.SkiaSharp.Tests/Alkahest.Streams.Extensions.SkiaSharp.Tests.csproj" />
   </Folder>
   <Folder Name="/Transforms/" />
   <Folder Name="/Transforms/Compression/">
@@ -28,13 +47,5 @@
   <Folder Name="/Transforms/Encryption/">
     <Project Path="src/Alkahest.Streams.Transforms.Encryption/Alkahest.Streams.Transforms.Encryption.csproj" />
     <Project Path="test/Alkahest.Streams.Transforms.Encryption.Tests/Alkahest.Streams.Transforms.Encryption.Tests.csproj" />
-  </Folder>
-  <Folder Name="/.Solution Items/">
-    <File Path=".editorconfig" />
-    <File Path="Directory.Build.props" />
-    <File Path="Directory.Build.targets" />
-    <File Path="Directory.Version.props" />
-    <File Path="global.json" />
-    <File Path="README.md" />
   </Folder>
 </Solution>

@@ -29,13 +29,7 @@ public interface ITransformer
     /// </summary>
     event EventHandler<TransformEndEventArgs>? TransformProcessEnd;
 
-    /// <summary>
-    /// Creates a transformer instance with the specified handlers.
-    /// </summary>
-    /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
-    /// <param name="handlers">The list of transform handlers.</param>
-    /// <returns>A new transformer instance.</returns>
-    static abstract TTransformer WithHandlers<TTransformer>(List<ITransformHandler> handlers) where TTransformer : Transformer, ITransformer, new();
+    // NOTE: If this grows beyond 3 parameters, a configuration class should be considered.
 
     /// <summary>
     /// Creates a transformer instance with the specified handlers and strategy.
@@ -43,8 +37,10 @@ public interface ITransformer
     /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
     /// <param name="handlers">The list of transform handlers.</param>
     /// <param name="strategy">The handler strategy to use.</param>
+    /// <param name="bufferedPoolThreshold">When the strategy is set to <see cref="HandlerStrategy.Auto"/>, this value determines the maximum threshold to use the buffered strategy, otherwise a pipeline strategy will be used.<para>The default threshold (25 MB)</para></param>
     /// <returns>A new transformer instance.</returns>
-    static abstract TTransformer WithHandlersAndStrategy<TTransformer>(List<ITransformHandler> handlers, HandlerStrategy strategy) where TTransformer : Transformer, ITransformer, new();
+    static abstract TTransformer Create<TTransformer>(List<ITransformHandler> handlers, HandlerStrategy strategy, long bufferedPoolThreshold)
+        where TTransformer : Transformer, ITransformer, new();
 
     /// <summary>
     /// Processes the input stream asynchronously and writes the result to the output stream.

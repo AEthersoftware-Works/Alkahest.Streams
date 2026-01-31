@@ -4,7 +4,6 @@ using System.IO.Pipelines;
 
 namespace Alkahest.Streams;
 
-using Events;
 using Performance;
 
 /// <summary>
@@ -12,7 +11,36 @@ using Performance;
 /// </summary>
 public abstract partial class Transformer : ITransformer
 {
+    /// <summary>
+    /// The default threshold (25 MB) for using to the Buffered strategy in Auto mode.
+    /// </summary>
+    protected const long BufferedStreamThresholdDefault = 26_214_400; //25 MB -> 25 * 1024 * 1024
+
+    /// <summary>
+    /// The maximum safe length (1.5 GB) for the Buffered strategy to prevent memory issues.
+    /// </summary>
+    protected const long BufferedStreamMaxLength = 1_610_612_736; // 1.5 GB -> 1.5 * 1024 * 1024 * 1024
+
     // TODO: Add means to "fire" telemetry anonymous function
+
+    /// <summary>
+    /// Gets or sets the buffered stream threshold in bytes.
+    /// <para>The default threshold (25 MB)</para>
+    /// </summary>
+    /// <remarks>
+    /// <para>When the strategy is set to <see cref="HandlerStrategy.Auto"/>, this value determines the maximum threshold to use the buffered strategy, otherwise a pipeline strategy will be used.</para>
+    /// <para>Values exceeding 1.5 GB will throw <see cref="BufferedStrategyNotSuitableException"/>.</para>
+    /// </remarks>
+    /// <exception cref="BufferedStrategyNotSuitableException">Thrown if the value exceeds the maximum safe length.</exception>
+    protected long BufferedStreamThreshold
+    {
+        get;
+        set
+        {
+            BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(value, BufferedStreamMaxLength);
+            field = value;
+        }
+    } = BufferedStreamThresholdDefault;
 
     /// <summary>
     /// Gets or sets the memory handling strategy used for processing handlers.
@@ -24,28 +52,22 @@ public abstract partial class Transformer : ITransformer
     /// </summary>
     protected List<ITransformHandler> Handlers { get; init; } = [];
 
-    /// <summary>
-    /// Creates a transformer instance with the specified handlers.
-    /// </summary>
-    /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
-    /// <param name="handlers">The list of transform handlers.</param>
-    /// <returns>A new transformer instance.</returns>
-    public static TTransformer WithHandlers<TTransformer>(List<ITransformHandler> handlers) where TTransformer : Transformer, ITransformer, new()
+    // NOTE: If this grows beyond 3 parameters, a configuration class should be considered.
+    /// <inheritdoc/>
+    public static TTransformer Create<TTransformer>(
+        List<ITransformHandler> handlers,
+        HandlerStrategy strategy = HandlerStrategy.Auto,
+        long bufferedPoolThreshold = BufferedStreamThresholdDefault
+    ) where TTransformer : Transformer, ITransformer, new()
     {
-        var instance = new TTransformer() { Handlers = handlers };
-        return instance;
-    }
+        BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(bufferedPoolThreshold);
+        var instance = new TTransformer()
+        {
+            Handlers = handlers,
+            Strategy = strategy,
+            BufferedStreamThreshold = bufferedPoolThreshold
+        };
 
-    /// <summary>
-    /// Creates a transformer instance with the specified handlers and strategy.
-    /// </summary>
-    /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
-    /// <param name="handlers">The list of transform handlers.</param>
-    /// <param name="strategy">The handler strategy to use.</param>
-    /// <returns>A new transformer instance.</returns>
-    public static TTransformer WithHandlersAndStrategy<TTransformer>(List<ITransformHandler> handlers, HandlerStrategy strategy) where TTransformer : Transformer, ITransformer, new()
-    {
-        var instance = new TTransformer() { Handlers = handlers, Strategy = strategy };
         return instance;
     }
 
@@ -60,10 +82,9 @@ public abstract partial class Transformer : ITransformer
     {
         if (Strategy == HandlerStrategy.Auto)
         {
-            if (input.CanSeek && input.Length < 5 * 1024 * 1024) // 5 MB threshold
-                Strategy = HandlerStrategy.Buffered;
-            else
-                Strategy = HandlerStrategy.Pipelined;
+            Strategy = input.CanSeek && input.Length <= BufferedStreamThreshold
+                ? HandlerStrategy.Buffered
+                : HandlerStrategy.Pipelined;
         }
 
         switch (Strategy)
@@ -86,6 +107,9 @@ public abstract partial class Transformer : ITransformer
     /// <returns>A task representing the asynchronous operation.</returns>
     protected async Task ProcessBufferedAsync(Stream input, Stream output, int bufferSize = 65536)
     {
+        if (input.CanSeek)
+            BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(input.Length, BufferedStreamMaxLength);
+
         var startTime = Stopwatch.StartNew();
         long totalBytesIn = input.CanSeek ? input.Length : 0;
         long totalBytesOut = 0;
@@ -99,77 +123,88 @@ public abstract partial class Transformer : ITransformer
             return;
         }
 
-        // Pre-allocate the list
-        HandlerDeltas = new HandlerStatsDeltaCollection(Handlers.Count);
-
         Stream current = input;
         long currentInputLength = totalBytesIn;
-        int handlerIdx = 0;
 
-        foreach (var handler in Handlers)
+        try
         {
-            var handlerStart = Stopwatch.StartNew();
+            // Pre-allocate the list
+            HandlerDeltas = new HandlerStatsDeltaCollection(Handlers.Count);
 
-            await NotifyHandlerStartAsync(handler, handlerIdx);
+            int handlerIdx = 0;
 
-            var handlerStatsBefore = CapturePerformanceStats(TimeSpan.Zero);
-
-            long handlerBytesIn = currentInputLength;
-
-            try
+            foreach (var handler in Handlers)
             {
-                // Starting with 256KB capacity to reduce resizes
-                using var tempOutput = new PooledMemoryStream(bufferSize * 4);
-                await handler.ProcessAsync(current, tempOutput);
+                var handlerStart = Stopwatch.StartNew();
 
-                long handlerBytesOut = tempOutput.Length;
-                totalBytesOut += handlerBytesOut;
+                await NotifyHandlerStartAsync(handler, handlerIdx);
 
-                var duration = handlerStart.Elapsed;
-                var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
-                var handlerStatsDelta = handlerStatsAfter - handlerStatsBefore;
+                var handlerStatsBefore = CapturePerformanceStats(TimeSpan.Zero);
 
-                HandlerDeltas.Add(handlerStatsDelta);
+                try
+                {
+                    // Starting with 256KB capacity to reduce resizes
+                    var tempOutput = new PooledMemoryStream(bufferSize * 4);
+                    await handler.ProcessAsync(current, tempOutput);
 
-                HandlerProcessEnd?.Invoke(this, new HandlerEndEventArgs(
-                    handlerName: handler.Name,
-                    handlerIndex: handlerIdx,
-                    duration: duration,
-                    bytesProcessed: handlerBytesOut,
-                    statsBefore: handlerStatsBefore,
-                    statsAfter: handlerStatsAfter,
-                    statsDelta: handlerStatsDelta));
+                    long handlerBytesOut = tempOutput.Length;
+                    totalBytesOut += handlerBytesOut;
 
-                tempOutput.Position = 0;
+                    var duration = handlerStart.Elapsed;
+                    var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
 
-                // Dispose previous stream.
-                if (current != input)
-                    await current.DisposeAsync();
+                    await NotifyHandlerEndAsync(
+                        handlerName: handler.Name,
+                        handlerIndex: handlerIdx,
+                        duration: duration,
+                        bytesProcessed: handlerBytesOut,
+                        statsBefore: handlerStatsBefore,
+                        statsAfter: handlerStatsAfter
+                    );
 
-                current = tempOutput;
-                currentInputLength = handlerBytesOut;
+                    tempOutput.Position = 0;
 
+                    // Dispose previous stream.
+                    if (current != input)
+                        await current.DisposeAsync();
+
+                    current = tempOutput;
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    var duration = handlerStart.Elapsed;
+                    var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
+
+                    await NotifyHandlerEndAsync(
+                        handlerName: handler.Name,
+                        handlerIndex: handlerIdx,
+                        duration: duration,
+                        bytesProcessed: -1,
+                        statsBefore: handlerStatsBefore,
+                        statsAfter: handlerStatsAfter,
+                        exception: lastError
+                    );
+
+                    throw;
+                }
+                handlerIdx++;
             }
-            catch (Exception ex)
-            {
-                lastError = ex;
-                var duration = handlerStart.Elapsed;
-                var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
-
-                await NotifyHandlerEndAsync(
-                    handlerName: handler.Name,
-                    handlerIndex: handlerIdx,
-                    duration: duration,
-                    bytesProcessed: -1,
-                    statsBefore: handlerStatsBefore,
-                    statsAfter: handlerStatsAfter
-                );
-
-                throw;
-            }
-
-            handlerIdx++;
         }
+        catch (Exception)
+        {
+            var totalDuration = startTime.Elapsed;
+
+            await NotifyTransformEndAsync(
+                totalDuration: totalDuration,
+                totalBytesIn: totalBytesIn,
+                totalBytesOut: totalBytesOut,
+                exception: lastError
+            );
+
+            throw;
+        }
+
         try
         {
             // Final copy to output using pooled buffer
@@ -189,7 +224,6 @@ public abstract partial class Transformer : ITransformer
             // Dispose the last intermediate stream
             if (current != input)
                 await current.DisposeAsync();
-
         }
     }
 
@@ -243,7 +277,11 @@ public abstract partial class Transformer : ITransformer
 
                     try
                     {
-                        await handler.ProcessAsync(currentInput, pipe.Writer.AsStream());
+                        var tempOutput = new TrackingStreamWriter(pipe.Writer.AsStream(true));
+                        await handler.ProcessAsync(currentInput, tempOutput);
+
+                        long handlerBytesOut = tempOutput.BytesWritten;
+                        totalBytesOut += handlerBytesOut;
 
                         var duration = handlerStart.Elapsed;
                         var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
@@ -252,7 +290,7 @@ public abstract partial class Transformer : ITransformer
                             handlerName: handler.Name,
                             handlerIndex: handlerIdx,
                             duration: duration,
-                            bytesProcessed: -1,
+                            bytesProcessed: handlerBytesOut,
                             statsBefore: handlerStatsBefore,
                             statsAfter: handlerStatsAfter
                         );
@@ -265,6 +303,7 @@ public abstract partial class Transformer : ITransformer
                     catch (Exception ex)
                     {
                         lastError = ex;
+                        
                         var duration = handlerStart.Elapsed;
                         var handlerStatsAfter = CapturePerformanceStats(duration, totalBytesIn, totalBytesOut);
 
@@ -273,7 +312,7 @@ public abstract partial class Transformer : ITransformer
                             handlerIndex: handlerIdx,
                             duration: duration,
                             bytesProcessed: -1,
-                            exception: ex,
+                            exception: lastError,
                             statsBefore: handlerStatsBefore,
                             statsAfter: handlerStatsAfter
                         );
@@ -289,6 +328,15 @@ public abstract partial class Transformer : ITransformer
             catch (Exception ex)
             {
                 await pipe.Writer.CompleteAsync(ex);
+
+                var totalDuration = startTime.Elapsed;
+
+                await NotifyTransformEndAsync(
+                    totalDuration: totalDuration,
+                    totalBytesIn: totalBytesIn,
+                    totalBytesOut: totalBytesOut,
+                    exception: lastError
+                );
             }
         });
 
