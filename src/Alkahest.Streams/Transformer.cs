@@ -11,7 +11,32 @@ using Performance;
 /// </summary>
 public abstract partial class Transformer : ITransformer
 {
+    /// <summary>
+    /// The default threshold (25 MB) for using to the Buffered strategy in Auto mode.
+    /// </summary>
+    protected const long BufferedStreamThresholdDefault = 26_214_400; //25 MB -> 25 * 1024 * 1024
+    
+    /// <summary>
+    /// The maximum safe length (1.5 GB) for the Buffered strategy to prevent memory issues.
+    /// </summary>
+    protected const long BufferedStreamMaxLength = 1_610_612_736; // 1.5 GB -> 1.5 * 1024 * 1024 * 1024
+
     // TODO: Add means to "fire" telemetry anonymous function
+
+    /// <summary>
+    /// Gets or sets the threshold in bytes for using to the Buffered strategy when using Auto mode.
+    /// Values exceeding 1.5 GB will throw <see cref="BufferedStrategyNotSuitableException"/>.
+    /// </summary>
+    /// <exception cref="BufferedStrategyNotSuitableException">Thrown if the value exceeds the maximum safe length.</exception>
+    protected long BufferedStreamThreshold
+    {
+        get;
+        set
+        {
+            BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(value, BufferedStreamMaxLength);
+            field = value;
+        }
+    } = BufferedStreamThresholdDefault;
 
     /// <summary>
     /// Gets or sets the memory handling strategy used for processing handlers.
@@ -23,28 +48,22 @@ public abstract partial class Transformer : ITransformer
     /// </summary>
     protected List<ITransformHandler> Handlers { get; init; } = [];
 
-    /// <summary>
-    /// Creates a transformer instance with the specified handlers.
-    /// </summary>
-    /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
-    /// <param name="handlers">The list of transform handlers.</param>
-    /// <returns>A new transformer instance.</returns>
-    public static TTransformer WithHandlers<TTransformer>(List<ITransformHandler> handlers) where TTransformer : Transformer, ITransformer, new()
+    // NOTE: If this grows beyond 3 parameters, a configuration class should be considered.
+    /// <inheritdoc/>
+    public static TTransformer Create<TTransformer>(
+        List<ITransformHandler> handlers,
+        HandlerStrategy strategy = HandlerStrategy.Auto,
+        long bufferedPoolThreshold = BufferedStreamThresholdDefault
+    ) where TTransformer : Transformer, ITransformer, new()
     {
-        var instance = new TTransformer() { Handlers = handlers };
-        return instance;
-    }
+        BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(bufferedPoolThreshold);
+        var instance = new TTransformer()
+        {
+            Handlers = handlers,
+            Strategy = strategy,
+            BufferedStreamThreshold = bufferedPoolThreshold
+        };
 
-    /// <summary>
-    /// Creates a transformer instance with the specified handlers and strategy.
-    /// </summary>
-    /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
-    /// <param name="handlers">The list of transform handlers.</param>
-    /// <param name="strategy">The handler strategy to use.</param>
-    /// <returns>A new transformer instance.</returns>
-    public static TTransformer WithHandlersAndStrategy<TTransformer>(List<ITransformHandler> handlers, HandlerStrategy strategy) where TTransformer : Transformer, ITransformer, new()
-    {
-        var instance = new TTransformer() { Handlers = handlers, Strategy = strategy };
         return instance;
     }
 
@@ -59,10 +78,9 @@ public abstract partial class Transformer : ITransformer
     {
         if (Strategy == HandlerStrategy.Auto)
         {
-            if (input.CanSeek && input.Length < 5 * 1024 * 1024) // 5 MB threshold
-                Strategy = HandlerStrategy.Buffered;
-            else
-                Strategy = HandlerStrategy.Pipelined;
+            Strategy = input.CanSeek && input.Length <= BufferedStreamThreshold
+                ? HandlerStrategy.Buffered
+                : HandlerStrategy.Pipelined;
         }
 
         switch (Strategy)
@@ -85,6 +103,9 @@ public abstract partial class Transformer : ITransformer
     /// <returns>A task representing the asynchronous operation.</returns>
     protected async Task ProcessBufferedAsync(Stream input, Stream output, int bufferSize = 65536)
     {
+        if (input.CanSeek)
+            BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(input.Length, BufferedStreamMaxLength);
+
         var startTime = Stopwatch.StartNew();
         long totalBytesIn = input.CanSeek ? input.Length : 0;
         long totalBytesOut = 0;

@@ -1,11 +1,13 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace Alkahest.Streams;
 
+[ExcludeFromCodeCoverage]
 internal struct CachedCompletedInt32Task
 {
     private Task<int>? _task;
@@ -55,7 +57,7 @@ public class PooledMemoryStream : Stream
 
     private CachedCompletedInt32Task _lastReadTask; // The last successful task returned from ReadAsync
 
-    private const int MemStreamMaxLength = int.MaxValue;
+    private const int MemStreamMaxLength = int.MaxValue - 56; // Array.MaxLength
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PooledMemoryStream"/> class with an initial capacity of 0.
@@ -103,10 +105,11 @@ public class PooledMemoryStream : Stream
 
         if (buffer.Length > 0)
         {
-            Buffer.BlockCopy(buffer, 0, _pooledBuffer, 0, _length);
+            Buffer.BlockCopy(buffer, 0, _pooledBuffer, 0, buffer.Length);
         }
 
-        _length = _capacity = _pooledBuffer.Length;
+        _length = buffer.Length;
+        _capacity = _pooledBuffer.Length;
         _writable = writable;
         _isOpen = true;
     }
@@ -157,15 +160,15 @@ public class PooledMemoryStream : Stream
 
         ArgumentOutOfRangeException.ThrowIfNegative(index);
         ArgumentOutOfRangeException.ThrowIfNegative(count);
-        
+
         if (buffer.Length - index < count)
             throw new ArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
 
-        _pooledBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+        _pooledBuffer = ArrayPool<byte>.Shared.Rent(count);
 
         if (buffer.Length > 0)
         {
-            Buffer.BlockCopy(buffer, 0, _pooledBuffer, 0, _length);
+            Buffer.BlockCopy(buffer, 0, _pooledBuffer, 0, index + count);
         }
 
         _origin = _position = index;
@@ -365,6 +368,7 @@ public class PooledMemoryStream : Stream
         set
         {
             ArgumentOutOfRangeException.ThrowIfNegative(value, nameof(Capacity));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, Array.MaxLength, nameof(Capacity));
 
             // Only update the capacity if the MS is expandable and the value is different than the current capacity.
             // Special behavior if the MS isn't expandable: we don't throw if value is the same as the current capacity
@@ -394,7 +398,12 @@ public class PooledMemoryStream : Stream
                 }
                 else
                 {
-                    _pooledBuffer = ArrayPool<byte>.Shared.Rent(0);
+                    byte[] newBuffer = ArrayPool<byte>.Shared.Rent(0);
+
+                    CryptographicOperations.ZeroMemory(_pooledBuffer);
+                    ArrayPool<byte>.Shared.Return(_pooledBuffer, clearArray: true); // No need to clear full if we zeroed written
+
+                    _pooledBuffer = newBuffer;
                 }
 
                 _capacity = value;
@@ -453,6 +462,7 @@ public class PooledMemoryStream : Stream
         }
         else
             Buffer.BlockCopy(_pooledBuffer, _position, buffer, offset, n);
+
         _position += n;
 
         return n;
@@ -670,15 +680,15 @@ public class PooledMemoryStream : Stream
     /// <inheritdoc/>
     public override void SetLength(long value)
     {
-        if (value < 0 || value > int.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(value), "Stream length must be non-negative and less than or equal to Int32.MaxValue.");
+        if (value < 0 || value > Array.MaxLength)
+            throw new ArgumentOutOfRangeException(nameof(value), "Stream length must be non-negative and less than or equal to Array.MaxLength.");
 
         EnsureWriteable();
 
         // Origin wasn't publicly exposed above.
-        Debug.Assert(MemStreamMaxLength == int.MaxValue);  // Check parameter validation logic in this method if this fails.
-        if (value > (int.MaxValue - _origin))
-            throw new ArgumentOutOfRangeException(nameof(value), "Stream length must be non-negative and less than or equal to Int32.MaxValue.");
+        Debug.Assert(MemStreamMaxLength == Array.MaxLength);  // Check parameter validation logic in this method if this fails.
+        if (value > (Array.MaxLength - _origin))
+            throw new ArgumentOutOfRangeException(nameof(value), "Stream length must be non-negative and less than or equal to Array.MaxLength.");
 
         int newLength = _origin + (int)value;
         bool allocatedNewArray = EnsureCapacity(newLength);
@@ -694,7 +704,7 @@ public class PooledMemoryStream : Stream
     {
         int count = _length - _origin;
         if (count == 0)
-            return Array.Empty<byte>();
+            return [];
         byte[] copy = GC.AllocateUninitializedArray<byte>(count);
         _pooledBuffer.AsSpan(_origin, count).CopyTo(copy);
         return copy;
@@ -882,4 +892,3 @@ public class PooledMemoryStream : Stream
     }
 
 }
-

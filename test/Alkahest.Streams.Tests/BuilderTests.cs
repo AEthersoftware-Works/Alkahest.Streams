@@ -113,4 +113,20 @@ public class BuilderTests
         Assert.NotEqual(new StallOptions(), (StallOptions?)handlers[0].Options.Value);
     }
 
+    [Fact]
+    public async Task Setting_Buffered_Strategy_Threshold_Beyond_Max_Throws_BufferedStrategyNotSuitableException()
+    {
+        // Assemble
+        long invalidThreshold = 3_221_225_472; // 3 GB
+
+        // Act
+        var act = () =>
+        {
+            var builder = new TestTransformBuilder()
+                .UseAutoStrategyWithThreshold(invalidThreshold);
+        };
+
+        // Assert
+        Assert.ThrowsAny<BufferedStrategyNotSuitableException>(act);
+    }
 }

@@ -13,9 +13,32 @@ public class TransformBuilder : ITransformBuilder
     protected const HandlerStrategy DefaultStrategy = HandlerStrategy.Auto;
 
     /// <summary>
+    /// The default threshold that the transformer will use the Buffered strategy.
+    /// </summary>
+    protected const long BufferedStreamThresholdDefault = 26_214_400; // 25 MB
+
+    /// <summary>
+    /// The maximum safe length for the Buffered strategy to prevent memory issues.
+    /// </summary>
+    protected const long BufferedStreamMaxLength = 1_610_612_736; // 1.5 GB
+
+    /// <summary>
     /// The current handler strategy configured for the transformer.
     /// </summary>
     protected HandlerStrategy Strategy { get; set; } = DefaultStrategy;
+
+    /// <summary>
+    /// The current threshold for switching to the Buffered strategy when using Auto mode.
+    /// </summary>
+    protected long BufferedStreamThreshold
+    {
+        get;
+        set
+        {
+            BufferedStrategyNotSuitableException.ThrowIfStreamLengthGreater(value, BufferedStreamMaxLength);
+            field = value;
+        }
+    } = BufferedStreamThresholdDefault;
 
     /// <summary>
     /// The list of transform handlers to be applied in sequence.
@@ -101,14 +124,18 @@ public class TransformBuilder : ITransformBuilder
         return this;
     }
 
+    /// <inheritdoc/>
+    public ITransformBuilder UseAutoStrategyWithThreshold(long bufferedPoolThreshold = 26214400)
+    {
+        Strategy = HandlerStrategy.Auto;
+        BufferedStreamThreshold = bufferedPoolThreshold;
+        return this;
+    }
+
     // TODO: This is incredibly basic usage, it is optimal for telemetry to subscribe
     //       to the metrics channel for non-blocking statistics data capture.
 
-    /// <summary>
-    /// Adds a telemetry event handler for transform end events.
-    /// </summary>
-    /// <param name="action">The event handler to add.</param>
-    /// <returns>The builder instance for chaining.</returns>
+    /// <inheritdoc/>
     public ITransformBuilder UseTelemetry(EventHandler<TransformEndEventArgs> action)
     {
         TransformEndEventBindings.Add(action);
@@ -163,16 +190,14 @@ public class TransformBuilder : ITransformBuilder
             transformer.TransformProcessEnd += transformEndEventListener;
     }
 
-    /// <summary>
-    /// Builds the transformer with the configured handlers and strategy.
-    /// </summary>
-    /// <typeparam name="TStreamTransformer">The type of transformer to build.</typeparam>
-    /// <returns>The built transformer.</returns>
+    /// <inheritdoc/>
     public TStreamTransformer Build<TStreamTransformer>() where TStreamTransformer : Transformer, ITransformer, new()
     {
-        var transformer = Strategy == DefaultStrategy
-            ? TStreamTransformer.WithHandlers<TStreamTransformer>(Handlers)
-            : TStreamTransformer.WithHandlersAndStrategy<TStreamTransformer>(Handlers, Strategy);
+        var transformer = TStreamTransformer.Create<TStreamTransformer>(
+            handlers: Handlers,
+            strategy: Strategy,
+            bufferedPoolThreshold: BufferedStreamThreshold
+        );
 
         ApplyEventBindings(transformer);
 

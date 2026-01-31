@@ -7,7 +7,7 @@ namespace Alkahest.Streams.Tests.Mock;
 /// <summary>
 /// Test Implementation of <see cref="TransformBuilder"/> as a convenience method to confirm internal configuration;
 /// </summary>
-public class TestTransformBuilder : TransformBuilder
+internal class TestTransformBuilder : TransformBuilder
 {
     public HandlerStrategy GetHandlerStrategy() => Strategy;
     public List<ITransformHandler> GetHandlers() => Handlers;

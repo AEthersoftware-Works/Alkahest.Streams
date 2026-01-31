@@ -100,6 +100,17 @@ public interface ITransformBuilder
     ITransformBuilder UseStrategy(HandlerStrategy strategy);
 
     /// <summary>
+    /// Sets the processing strategy for the transformer to Auto, allowing fluent configuration of the threshold
+    /// for switching to the Buffered strategy. The Buffered strategy uses <see cref="PooledMemoryStream"/> for
+    /// efficient memory management on smaller streams.
+    /// </summary>
+    /// <param name="bufferedPoolThreshold">The maximum threshold in bytes (default 25 MB) that will use the Buffered strategy.
+    /// Must not exceed 1.5 GB to prevent excessive memory usage and/or <see cref="OutOfMemoryException"/> exceptions.</param>
+    /// <returns>The builder instance for chaining.</returns>
+    /// <exception cref="BufferedStrategyNotSuitableException">Thrown if <paramref name="bufferedPoolThreshold"/> exceeds 1.5 GB.</exception>
+    ITransformBuilder UseAutoStrategyWithThreshold(long bufferedPoolThreshold = 26_214_400);
+
+    /// <summary>
     /// Builds the transformer with the configured handlers and strategy.
     /// </summary>
     /// <typeparam name="TStreamTransformer">The type of transformer to build.</typeparam>

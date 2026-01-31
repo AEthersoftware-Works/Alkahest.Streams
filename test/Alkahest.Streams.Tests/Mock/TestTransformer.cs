@@ -4,7 +4,7 @@ using Xunit.Internal;
 
 namespace Alkahest.Streams.Tests.Mock;
 
-public class TestTransformer : Transformer
+internal class TestTransformer : Transformer
 {
     public HandlerStrategy GetHandlerStrategy() => Strategy;
 

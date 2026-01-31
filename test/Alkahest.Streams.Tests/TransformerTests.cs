@@ -302,6 +302,7 @@ public class TransformerTests
 
         TestTransformer transformer = new TransformBuilder()
                 .ProcessWith<PassThruHandler>()
+                .UseAutoStrategyWithThreshold(7_340_032 - 50)
                 .Build<TestTransformer>();
 
         using var input = new MemoryStream(data);
