@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 
 namespace Alkahest.Streams;
 
-[ExcludeFromCodeCoverage]
 internal struct CachedCompletedInt32Task
 {
     private Task<int>? _task;
