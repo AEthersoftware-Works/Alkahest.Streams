@@ -72,7 +72,7 @@ internal class StallOptions
 #if NET8_0
     public Guid Id { get; set; } = Guid.NewGuid();
 #endif
-#if NET10_0_OR_GREATER
+#if NET9_0_OR_GREATER
     public Guid Id { get; set; } = Guid.CreateVersion7();
 #endif
     public TimeSpan Delay { get; set; }
