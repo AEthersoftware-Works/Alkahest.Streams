@@ -52,9 +52,9 @@ public class TrackingStreamWriter(Stream stream) : Stream
     public override void Flush() => _inner.Flush();
 
     /// <inheritdoc/>
-    public override async Task FlushAsync(CancellationToken cancellationToken)
+    public override Task FlushAsync(CancellationToken cancellationToken)
     {
-        await _inner.FlushAsync(cancellationToken);
+        return _inner.FlushAsync(cancellationToken);
     }
 
     /// <inheritdoc/>
