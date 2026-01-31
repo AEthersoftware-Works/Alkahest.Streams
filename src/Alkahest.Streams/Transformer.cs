@@ -15,7 +15,7 @@ public abstract partial class Transformer : ITransformer
     /// The default threshold (25 MB) for using to the Buffered strategy in Auto mode.
     /// </summary>
     protected const long BufferedStreamThresholdDefault = 26_214_400; //25 MB -> 25 * 1024 * 1024
-    
+
     /// <summary>
     /// The maximum safe length (1.5 GB) for the Buffered strategy to prevent memory issues.
     /// </summary>
@@ -24,9 +24,13 @@ public abstract partial class Transformer : ITransformer
     // TODO: Add means to "fire" telemetry anonymous function
 
     /// <summary>
-    /// Gets or sets the threshold in bytes for using to the Buffered strategy when using Auto mode.
-    /// Values exceeding 1.5 GB will throw <see cref="BufferedStrategyNotSuitableException"/>.
+    /// Gets or sets the buffered stream threshold in bytes.
+    /// <para>The default threshold (25 MB)</para>
     /// </summary>
+    /// <remarks>
+    /// <para>When the strategy is set to <see cref="HandlerStrategy.Auto"/>, this value determines the maximum threshold to use the buffered strategy, otherwise a pipeline strategy will be used.</para>
+    /// <para>Values exceeding 1.5 GB will throw <see cref="BufferedStrategyNotSuitableException"/>.</para>
+    /// </remarks>
     /// <exception cref="BufferedStrategyNotSuitableException">Thrown if the value exceeds the maximum safe length.</exception>
     protected long BufferedStreamThreshold
     {
