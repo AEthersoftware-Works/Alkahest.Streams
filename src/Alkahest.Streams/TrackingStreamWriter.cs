@@ -23,8 +23,8 @@ public class TrackingStreamWriter(Stream stream) : Stream
     /// <inheritdoc/>
     public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        BytesWritten += buffer.Length;
         await _inner.WriteAsync(buffer, cancellationToken);
+        BytesWritten += buffer.Length;
     }
 
     /// <inheritdoc/>
@@ -32,6 +32,13 @@ public class TrackingStreamWriter(Stream stream) : Stream
     {
         _inner.Write(buffer, offset, count);
         BytesWritten += count;
+    }
+
+    /// <inheritdoc/>
+    public override void WriteByte(byte value)
+    {
+        _inner.WriteByte(value);
+        BytesWritten += 1;
     }
 
     /// <inheritdoc/>
@@ -43,6 +50,12 @@ public class TrackingStreamWriter(Stream stream) : Stream
 
     /// <inheritdoc/>
     public override void Flush() => _inner.Flush();
+
+    /// <inheritdoc/>
+    public override async Task FlushAsync(CancellationToken cancellationToken)
+    {
+        await _inner.FlushAsync(cancellationToken);
+    }
 
     /// <inheritdoc/>
     public override bool CanRead => _inner.CanRead;

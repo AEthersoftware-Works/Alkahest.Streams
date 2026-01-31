@@ -1,4 +1,3 @@
-using System;
 using System.Buffers;
 using System.Security.Cryptography;
 
@@ -24,11 +23,15 @@ public sealed class AesGcmEncryptionOptions : IDisposable
             if (value.Length != 32)
                 throw new ArgumentException("Key must be 32 bytes for AES-256-GCM");
 
+            // Handles setting via Reflection.
             if (_key != null)
+            {
                 CryptographicOperations.ZeroMemory(_key.AsSpan(0, 32));
+                ArrayPool<byte>.Shared.Return(_key, clearArray: true);
+            }
 
             _key = ArrayPool<byte>.Shared.Rent(32);
-            Key.CopyTo(_key.AsSpan(0, 32));
+            value.CopyTo(_key.AsSpan(0, 32));
         }
     }
 
@@ -40,8 +43,12 @@ public sealed class AesGcmEncryptionOptions : IDisposable
         get => _aad ?? ReadOnlySpan<byte>.Empty;
         init
         {
+            // Handles setting via Reflection.
             if (_aad != null)
+            {
                 CryptographicOperations.ZeroMemory(_aad.AsSpan(0, _aad.Length));
+                ArrayPool<byte>.Shared.Return(_aad, clearArray: true);
+            }
 
             _aad = ArrayPool<byte>.Shared.Rent(value.Length);
             value.CopyTo(_aad.AsSpan(0, value.Length));
@@ -68,6 +75,7 @@ public sealed class AesGcmEncryptionOptions : IDisposable
         if (_key != null)
         {
             CryptographicOperations.ZeroMemory(_key.AsSpan(0, 32));
+            ArrayPool<byte>.Shared.Return(_key, clearArray: true);
             _key = null;
         }
 
@@ -80,6 +88,7 @@ public sealed class AesGcmEncryptionOptions : IDisposable
         if (_aad != null)
         {
             CryptographicOperations.ZeroMemory(_aad.AsSpan(0, _aad.Length));
+            ArrayPool<byte>.Shared.Return(_aad, clearArray: true);
             _aad = null;
         }
 

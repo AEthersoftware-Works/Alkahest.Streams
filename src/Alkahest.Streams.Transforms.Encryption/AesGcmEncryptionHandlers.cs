@@ -76,6 +76,7 @@ public class AesGcmEncryptionHandler : EncryptionHandler
             ArrayPool<byte>.Shared.Return(plaintextBuffer);
             ArrayPool<byte>.Shared.Return(ciphertextBuffer);
             CryptographicOperations.ZeroMemory(nonce);
+            CryptographicOperations.ZeroMemory(tagBuffer);
         }
     }
 }
@@ -120,7 +121,7 @@ public class AesGcmDecryptionHandler : DecryptionHandler
         // Read nonce (first 12 bytes)
         byte[] nonce = new byte[AesGcm.NonceByteSizes.MaxSize];
         
-        int bytesRead = await input.ReadAsync(nonce.ToArray());
+        int bytesRead = await input.ReadAsync(nonce);
         if (bytesRead != nonce.Length)
             throw new InvalidDataException("Nonce too short");
 
@@ -135,7 +136,7 @@ public class AesGcmDecryptionHandler : DecryptionHandler
             int bytesReadCipher;
             while ((bytesReadCipher = await input.ReadAsync(ciphertextBuffer.AsMemory(0, ChunkSize))) > 0)
             {
-                int bytesReadTag = await input.ReadAsync(tagBuffer.ToArray().AsMemory(0, opts.TagSizeInBytes));
+                int bytesReadTag = await input.ReadAsync(tagBuffer.AsMemory(0, opts.TagSizeInBytes));
                 if (bytesReadTag != opts.TagSizeInBytes)
                     throw new InvalidDataException("Tag too short");
 
@@ -155,6 +156,7 @@ public class AesGcmDecryptionHandler : DecryptionHandler
             ArrayPool<byte>.Shared.Return(ciphertextBuffer);
             ArrayPool<byte>.Shared.Return(plaintextBuffer);
             CryptographicOperations.ZeroMemory(nonce);
+            CryptographicOperations.ZeroMemory(tagBuffer);
         }
     }
 }

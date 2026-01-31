@@ -165,8 +165,6 @@ public abstract partial class Transformer : ITransformer
                         await current.DisposeAsync();
 
                     current = tempOutput;
-                    currentInputLength = handlerBytesOut;
-
                 }
                 catch (Exception ex)
                 {

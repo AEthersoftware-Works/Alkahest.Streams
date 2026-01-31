@@ -37,7 +37,7 @@ public interface ITransformer
     /// <typeparam name="TTransformer">The type of the transformer.</typeparam>
     /// <param name="handlers">The list of transform handlers.</param>
     /// <param name="strategy">The handler strategy to use.</param>
-    /// <param name="bufferedPoolThreshold">The default threshold (25 MB) for using to the Buffered strategy in Auto mode.</param>
+    /// <param name="bufferedPoolThreshold">When the strategy is set to <see cref="HandlerStrategy.Auto"/>, this value determines the maximum threshold to use the buffered strategy, otherwise a pipeline strategy will be used.<para>The default threshold (25 MB)</para></param>
     /// <returns>A new transformer instance.</returns>
     static abstract TTransformer Create<TTransformer>(List<ITransformHandler> handlers, HandlerStrategy strategy, long bufferedPoolThreshold)
         where TTransformer : Transformer, ITransformer, new();

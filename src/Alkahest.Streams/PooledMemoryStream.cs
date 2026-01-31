@@ -168,7 +168,7 @@ public class PooledMemoryStream : Stream
 
         if (buffer.Length > 0)
         {
-            Buffer.BlockCopy(buffer, 0, _pooledBuffer, 0, index + count);
+            Buffer.BlockCopy(buffer, index, _pooledBuffer, 0, index + count);
         }
 
         _origin = _position = index;

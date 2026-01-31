@@ -35,13 +35,11 @@ public class BuilderTests
 
         TestTransformBuilder builder = new();
 
+        // Act
         builder.AddTransformBeginEventListener((s, e) => transformStart = e.Timestamp)
                .AddHandlerBeginEventListener((s, e) => handlerStart = e.Timestamp)
                .AddHandlerEndEventListener((o, e) => handlerEnd = e.Timestamp)
                .AddTransformEndEventListener((s, e) => transformEnd = e.Timestamp);
-
-        // Act
-        TestTransformer transformer = builder.Build<TestTransformer>();
 
         // Assert
         Assert.NotNull(builder.GetTransformBeginEventBindings());
