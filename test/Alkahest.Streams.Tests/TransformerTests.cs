@@ -1,17 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 
+using Alkahest.Streams.Events;
 using Alkahest.Streams.Performance;
 
 namespace Alkahest.Streams.Tests;
 
-using System.Runtime;
-
-using Alkahest.Streams.Events;
-
 using Mock;
-
-using Xunit.Internal;
 
 public class TransformerTests
 {
@@ -56,8 +51,8 @@ public class TransformerTests
         var originalBytes = Enumerable.Range(0, 0x1234)
             .Select(b => (byte)(b % 20)).ToArray();
 
-        var input = new MemoryStream(originalBytes);
-        var output = new MemoryStream();
+        using var input = new MemoryStream(originalBytes);
+        using var output = new MemoryStream();
 
         // Act
         await emptyTransformer.ProcessAsync(input, output);
@@ -110,8 +105,8 @@ public class TransformerTests
         var originalBytes = Enumerable.Range(0, 0x1234)
             .Select(b => (byte)(b % 20)).ToArray();
 
-        var input = new MemoryStream(originalBytes);
-        var output = new MemoryStream();
+        using var input = new MemoryStream(originalBytes);
+        using var output = new MemoryStream();
 
         // Act
         await emptyTransformer.ProcessAsync(input, output);
@@ -157,7 +152,7 @@ public class TransformerTests
                 var handler = new StallingHandler();
                 handlerStatsBefore = TestTransformer.CapturePerformanceStats(TimeSpan.FromSeconds(0), 42, 0);
                 handlerStatsAfter = TestTransformer.CapturePerformanceStats(TimeSpan.FromMilliseconds(300), 42, 42);
-                var delta = handlerStatsBefore - handlerStatsAfter;
+
                 //transformer.AppendHandlerDelta(delta);
 
                 await transformer.NotifyHandlerEndAsync(
@@ -234,7 +229,7 @@ public class TransformerTests
         var options = new PassThruOptions(completionMessage: messageSuffix);
 
         TestTransformer transformer = new TransformBuilder()
-                .ProcessWith<PassThruHandler, PassThruOptions>(new PassThruOptions() { CompletionMessage = messageSuffix })
+                .ProcessWith<PassThruHandler, PassThruOptions>(options)
                 .Build<TestTransformer>();
 
         bool handlerEndEventHasStats = false,
@@ -276,7 +271,7 @@ public class TransformerTests
         output.Position = 0;
 
         using var sr = new StreamReader(output);
-        var result = await sr.ReadToEndAsync(TestContext.Current.CancellationToken);
+        await sr.ReadToEndAsync(TestContext.Current.CancellationToken);
 
         // Assert
         // We've collected statistics data
