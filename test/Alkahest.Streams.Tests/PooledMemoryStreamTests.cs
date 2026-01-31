@@ -483,7 +483,7 @@ public partial class PooledMemoryStreamTests
 
         // Act
         using var stream = GetStream();
-        stream.Write([1, 2, 3], 0, 3);
+        stream.Write(firstWriteBuffer, 0, 3);
         stream.Position = 0;
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -857,7 +857,7 @@ public partial class PooledMemoryStreamTests
         var source = GetStream();
         source.Write([1, 2, 3], 0, 3);
         source.Position = 0;
-        var destination = new MemoryStream();
+        using var destination = new MemoryStream();
 
         // Act
         await source.CopyToAsync(destination, 10, TestContext.Current.CancellationToken);
@@ -876,7 +876,7 @@ public partial class PooledMemoryStreamTests
         // Assemble
         var stream = GetStream();
         stream.Write([1, 2, 3, 4, 5], 0, 5);
-        var destination = new MemoryStream();
+        using var destination = new MemoryStream();
 
         // Act
         stream.WriteTo(destination);

@@ -28,7 +28,7 @@ public class TrackingStreamWriterTests
         var inner = new MemoryStream();
         var tracking = new TrackingStreamWriter(inner);
 
-        var source = new MemoryStream([4, 5, 6, 7]);
+        using var source = new MemoryStream([4, 5, 6, 7]);
 
         // Act
         await source.CopyToAsync(tracking, TestContext.Current.CancellationToken);
