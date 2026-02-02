@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(AlkahestTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <PackageId>Alkahest.Extensions.NativeCompression</PackageId>
+    <Title>Alkahest.Extensions.NativeCompression</Title>
+    <Product>Alkahest.Extensions.NativeCompression</Product>
+    <Description>Compression transform for Alkahest.Streams. Provides GZip, Brotli, and Zstd stream compression and decompression handlers for efficient data pipelines.</Description>
+    <Summary>Compression transform for Alkahest.Streams. Provides GZip, Brotli, and Zstd stream compression and decompression handlers for efficient data pipelines.</Summary>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Compression;Gzip;Brotli;Zstd;</PackageTags>
+    <PackageIcon>alkahest-streams-transforms-compression-nuget.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../assets/alkahest-streams-transforms-compression-nuget.png" Pack="true" PackagePath="" Visible="false">
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NativeCompressions" Version="0.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />
+  </ItemGroup>
+
+
+
+</Project>

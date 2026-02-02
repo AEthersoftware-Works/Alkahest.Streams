@@ -1,17 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(AlkahestTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
-  <PackageId>Alkahest.Streams.Extensions.OpenTelemetry</PackageId>
-  <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
-  <Title>Alkahest.Streams.Extensions.OpenTelemetry</Title>
-  <Description>OpenTelemetry extension for Alkahest.Streams. Provides observability and tracing integration for stream processing pipelines.</Description>
-  <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Open Telemetry;</PackageTags>
-  <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
-</PropertyGroup>
+    <PackageId>Alkahest.Streams.Extensions.OpenTelemetry</PackageId>
+    <Title>Alkahest.Streams.Extensions.OpenTelemetry</Title>
+    <Product>Alkahest.Streams.Extensions.OpenTelemetry</Product>
+    <Description>OpenTelemetry extension for Alkahest.Streams. Provides observability and tracing integration for stream processing pipelines.</Description>
+    <Summary>OpenTelemetry extension for Alkahest.Streams. Provides observability and tracing integration for stream processing pipelines.</Summary>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Open Telemetry;</PackageTags>
+    <PackageIcon>alkahest-streams-extensions-opentelemetry-nuget.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../assets/alkahest-streams-extensions-opentelemetry-nuget.png" Pack="true" PackagePath="" Visible="false">
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />

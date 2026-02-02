@@ -1,20 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(AlkahestTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>Alkahest.Streams.Extensions.Logging</PackageId>
-    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
     <Title>Alkahest.Streams.Extensions.Logging</Title>
+    <Product>Alkahest.Streams.Extensions.Logging</Product>
     <Description>Logging extensions for Alkahest.Streams. Provides logging integration for stream processing pipelines in .NET applications.</Description>
+    <Summary>Logging extensions for Alkahest.Streams. Provides logging integration for stream processing pipelines in .NET applications.</Summary>
     <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Compression;Encryption;Logging;DI;Dependency Injection;</PackageTags>
-    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+    <PackageIcon>alkahest-streams-extensions-msdi-nuget.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="../../assets/alkahest-streams-extensions-msdi-nuget.png" Pack="true" PackagePath="" Visible="false">
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
   </ItemGroup>
 
 </Project>

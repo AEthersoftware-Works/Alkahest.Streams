@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- <TargetFramework>net10.0</TargetFramework> -->
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>$(AlkahestTargetFrameworks)</TargetFrameworks>
     <RootNamespace>Alkahest.Streams</RootNamespace>
     <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
     <FileVersion>$(VersionPrefix)</FileVersion>
@@ -26,10 +25,6 @@
     <None Include="../../assets/alkahest-streams-nuget.png" Pack="true" PackagePath="" Visible="false">
       <Pack>True</Pack>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Events/" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">

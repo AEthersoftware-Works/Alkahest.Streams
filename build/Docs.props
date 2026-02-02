@@ -1,0 +1,11 @@
+<Project>
+
+    <PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- <DocumentationFile>$(SolutionDir)build\Alkahest.Streams.xml</DocumentationFile> -->
+        <!-- See https://github.com/NuGet/Home/issues/6001 -->
+        <NoWarn>NU5118</NoWarn>
+        <!-- <NoWarn>$(NoWarn);NU5118;1591</NoWarn> -->
+    </PropertyGroup>
+
+</Project>

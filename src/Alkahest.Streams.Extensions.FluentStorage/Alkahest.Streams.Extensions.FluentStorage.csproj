@@ -1,21 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>$(AlkahestTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>Alkahest.Streams.Extensions.FluentStorage</PackageId>
-    <PackageVersion>$(VersionPrefix).$(BuildNumber)-rc-$(Revision)</PackageVersion>
     <Title>Alkahest.Streams.Extensions.FluentStorage</Title>
+    <Product>Alkahest.Streams.Extensions.FluentStorage</Product>
     <Description>FluentStorage extension for Alkahest.Streams. Provides integration with stream processing pipelines in FluentStorage sinks.</Description>
+    <Summary>FluentStorage extension for Alkahest.Streams. Provides integration with stream processing pipelines in FluentStorage sinks.</Summary>
     <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;FluentStorage;S3;Object Storage</PackageTags>
-    <!-- <PackageIcon>alkahest-streams-nuget.png</PackageIcon> -->
+    <PackageIcon>alkahest-streams-extensions-fluentstorage-nuget.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../assets/alkahest-streams-extensions-fluentstorage-nuget.png" Pack="true" PackagePath="" Visible="false">
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <PackageReference Include="FluentStorage" Version="6.0.2" />
+  </ItemGroup>
+
 
 </Project>

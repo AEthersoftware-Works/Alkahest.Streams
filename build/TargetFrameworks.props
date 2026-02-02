@@ -1,0 +1,7 @@
+<Project>
+    <PropertyGroup>
+        <NetCurrent>net10.0</NetCurrent>
+        <NetMinimum>net8.0</NetMinimum>
+        <AlkahestTargetFrameworks>$(NetCurrent);$(NetMinimum)</AlkahestTargetFrameworks>
+    </PropertyGroup>
+</Project>

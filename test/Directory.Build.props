@@ -1,7 +1,13 @@
 <Project>
-    <PropertyGroup>
-        <GenerateDocumentationFile>false</GenerateDocumentationFile>
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <NoWarn>CS1591</NoWarn>
+    <!-- Target Frameworks -->
+    <Import Project="$(MSBuildThisFileDirectory)../build/TargetFrameworks.props" />
+
+    <!-- XUnit -->
+     <Import Project="$(MSBuildThisFileDirectory)../build/XUnit.props" />
+
+     <PropertyGroup>
+        <UseArtifactsOutput>true</UseArtifactsOutput>
+        <ArtifactsPath>$(MSBuildThisFileDirectory)../artifacts/test</ArtifactsPath>
     </PropertyGroup>
+
 </Project>

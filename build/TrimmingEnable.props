@@ -1,0 +1,17 @@
+<Project DefaultTargets="Build"
+    xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+        <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+        <TrimmerSingleWarn>false</TrimmerSingleWarn>
+        <IsTrimmable>true</IsTrimmable>
+        <IsAotCompatible Condition="'$(IsAotCompatible)' == ''">true</IsAotCompatible>
+        <ILLinkTreatWarningsAsErrors>$(TreatWarningsAsErrors)</ILLinkTreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND '$(EnableRuntimeMarshalling)' != 'true'">
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.DisableRuntimeMarshallingAttribute" />
+    </ItemGroup>
+
+</Project>

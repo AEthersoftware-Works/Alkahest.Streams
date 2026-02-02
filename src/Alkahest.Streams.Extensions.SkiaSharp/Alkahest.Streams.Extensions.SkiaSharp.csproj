@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(AlkahestTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Alkahest.Streams</RootNamespace>
+    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix)</FileVersion>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <PackageId>Alkahest.Streams.Extensions.SkiaSharp</PackageId>
+    <Title>Alkahest.Streams.Extensions.SkiaSharp</Title>
+    <Description>SkiaSharp Image transforms for Alkahest.Streams. Provides SkiaSharp-based handlers for image manipulation, conversion, resizing, and format adjustments in stream processing pipelines.</Description>
+    <PackageTags>Alkahest;Alkahest.Streams;Streams;IO;Images;Skia;Skia Sharp;SkiaSharp;Convert;Adjust;Resize;Format</PackageTags>
+    <PackageIcon>alkahest-streams-transforms-images-nuget.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../assets/alkahest-streams-transforms-images-nuget.png" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Alkahest.Streams/Alkahest.Streams.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" Condition="$([MSBuild]::IsOSPlatform('Linux'))" />
+  </ItemGroup>
+
+  </Project>

@@ -1,46 +1,36 @@
 <Project>
-    <Import Project="$(MSBuildThisFileDirectory)Directory.Version.props" />
-    <PropertyGroup>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <!-- <TreatWarningsAsErrors>True</TreatWarningsAsErrors> -->
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <LocalNuGetPublishDestination>$(NUGET_DEFAULT_PUSH_SOURCE)</LocalNuGetPublishDestination>
-        <LocalNuGetPublishDestination Condition="'$(LocalNuGetPublishDestination)' == ''">$(MSBuildThisFileDirectory)/.local-nuget</LocalNuGetPublishDestination>
-    </PropertyGroup>
+    <!-- Package/Assembly Versioning -->
+    <Import Project="$(MSBuildThisFileDirectory)build/Version.props" />
 
     <!-- Shared Package info -->
-    <PropertyGroup>
-        <Authors>Æther Software Works, Alkahest.Streams Contributors</Authors>
-        <Company>AEther Software Works</Company>
-        <Copyright>Copyright © Aether Software Works 2026</Copyright>
-        <PackageProjectUrl>https://github.com/AEthersoftware-Works/Alkahest.Streams</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/AEthersoftware-Works/Alkahest.Streams</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
-        <PackageLicense>Apache-2.0</PackageLicense>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    </PropertyGroup>
+    <Import Project="$(MSBuildThisFileDirectory)build/Package.props"/>
 
-    <ItemGroup>
-        <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/" Visible="false"/>
-        <None Include="$(MSBuildThisFileDirectory)LICENSE.txt" Pack="true" PackagePath="/" Visible="false"/>
-    </ItemGroup>
+    <!-- Target Frameworks -->
+    <Import Project="$(MSBuildThisFileDirectory)build/TargetFrameworks.props" />
 
     <!-- Documentation config -->
+    <Import Project="$(MSBuildThisFileDirectory)build/Docs.props" />
+
+    <!-- SBOM (Release targeted builds) -->
+    <Import Project="$(MSBuildThisFileDirectory)build/BillOfMaterials.props" />
+
+    <!-- Nullable Enable -->
+    <Import Project="$(MSBuildThisFileDirectory)build/NullableEnable.props" />
+
     <PropertyGroup>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <!-- <DocumentationFile>$(SolutionDir)build\Alkahest.Streams.xml</DocumentationFile> -->
-        <!-- See https://github.com/NuGet/Home/issues/6001 -->
-        <NoWarn>NU5118</NoWarn>
-        <!-- <NoWarn>$(NoWarn);NU5118;1591</NoWarn> -->
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <UseArtifactsOutput>true</UseArtifactsOutput>
+        <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts/src</ArtifactsPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Staging'">
+        <OutputPath>bin\Staging\</OutputPath>
+        <DefineConstants>STAGING</DefineConstants>
     </PropertyGroup>
 </Project>

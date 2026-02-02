@@ -1,0 +1,26 @@
+<Project>
+
+    <!-- Shared Package Props -->
+    <PropertyGroup>
+        <Authors>Æther Software Works, Alkahest.Streams Contributors</Authors>
+        <Company>AEther Software Works</Company>
+        <Copyright>Copyright © Aether Software Works 2026</Copyright>
+        <PackageProjectUrl>https://github.com/AEthersoftware-Works/Alkahest.Streams</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/AEthersoftware-Works/Alkahest.Streams</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <PackageLicense>Apache-2.0</PackageLicense>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" Visible="false"/>
+        <None Include="$(MSBuildThisFileDirectory)../LICENSE.txt" Pack="true" PackagePath="/" Visible="false"/>
+    </ItemGroup>
+
+</Project>

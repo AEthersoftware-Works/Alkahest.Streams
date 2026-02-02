@@ -2,6 +2,24 @@ using System.IO.Compression;
 
 namespace Alkahest.Streams.Transforms.Compression;
 
+
+#if NET8_0
+/// <summary>
+/// Handler for compressing streams using GZip.
+/// </summary>
+public class GzipCompressionHandler : CompressionHandler
+{
+    /// <inheritdoc/>
+    public override string Name { get; init; } = nameof(GzipCompressionHandler);
+
+    /// <inheritdoc/>
+    public override async Task ProcessAsync(Stream input, Stream output)
+    {
+        using var compressor = new GZipStream(output, CompressionLevel.Optimal, true);
+        await input.CopyToAsync(compressor);
+    }
+}
+#elif NET10_0_OR_GREATER
 /// <summary>
 /// Handler for compressing streams using GZip.
 /// </summary>
@@ -33,10 +51,11 @@ public class GzipCompressionHandler : CompressionHandler
     /// <inheritdoc/>
     public override async Task ProcessAsync(Stream input, Stream output)
     {
-        using var compressor = new GZipStream(output, Options.Value, true);
+        using var compressor = new GZipStream(output, Options.Value ?? DefaultOptions, true);
         await input.CopyToAsync(compressor);
     }
 }
+#endif
 
 /// <summary>
 /// Handler for decompressing GZip-compressed streams.

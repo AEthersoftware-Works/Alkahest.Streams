@@ -9,6 +9,7 @@
 			"Astc",
 			"baget",
 			"ciphertext",
+			"docfx",
 			"encryptor",
 			"exposable",
 			"fluentstorage",
@@ -16,9 +17,16 @@
 			"netstandard",
 			"Resampler",
 			"Skia",
+			"Testably",
 			"Wbmp",
 			"xunit",
 			"Zstandard"
+		],
+		"xml.fileAssociations": [
+			{
+				"pattern": "**/*.slnx",
+				"systemId": "https://raw.githubusercontent.com/microsoft/vs-solutionpersistence/refs/heads/main/src/Microsoft.VisualStudio.SolutionPersistence/Serializer/Xml/Slnx.xsd"
+			}
 		]
 	},
 	"extensions": {

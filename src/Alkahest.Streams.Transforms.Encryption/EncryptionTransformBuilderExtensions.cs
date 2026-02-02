@@ -39,7 +39,7 @@ public static class EncryptionTransformBuilderExtensions
         /// <returns>The builder instance for chaining.</returns>
         public ITransformBuilder EncryptWith<THandler, THandlerOptions>(Action<THandlerOptions>? configure)
             where THandler : EncryptionHandler, ITransformHandler, new()
-            where THandlerOptions : new()
+            where THandlerOptions : class, new()
             => builder.ProcessWith<THandler, THandlerOptions>(configure);
 
         /// <summary>
@@ -72,7 +72,7 @@ public static class EncryptionTransformBuilderExtensions
         /// <returns>The builder instance for chaining.</returns>
         public ITransformBuilder DecryptWith<THandler, THandlerOptions>(Action<THandlerOptions>? configure)
            where THandler : DecryptionHandler, ITransformHandler, new()
-           where THandlerOptions : new()
+           where THandlerOptions : class, new()
             => builder.ProcessWith<THandler, THandlerOptions>(configure);
     }
 }

@@ -508,7 +508,11 @@ public partial class PooledMemoryStreamTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
+#pragma warning disable CA2022 // Avoid inexact read with Stream.Read
+
         var act = async () => { await stream.ReadAsync(buffer, cts.Token); };
+
+#pragma warning restore CS8625 // Avoid inexact read with Stream.Read
 
         // Assert
         await Assert.ThrowsAsync<TaskCanceledException>(act);

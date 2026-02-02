@@ -9,7 +9,7 @@
         <!-- Fallbacks -->
         <BuildNumber Condition="'$(BuildNumber)' == ''">$([System.DateTime]::Now.ToString('Mddhhmm'))</BuildNumber>
         <Revision Condition="'$(Revision)' == ''">$([System.DateTime]::Now.ToString('HH'))</Revision>
-        
+
         <VersionPrefix>$(BuildYear).$(BuildMonth).0</VersionPrefix>
         <VersionSuffix>alpha-$(BuildNumber)</VersionSuffix>
     </PropertyGroup>
