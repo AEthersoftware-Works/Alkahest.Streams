@@ -1,0 +1,248 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: 'Build & Release'
+
+on:
+  workflow_dispatch: 
+    inputs:
+      tag:
+        description: 'tag: git tag to create. e.g. (1.0.0)'
+        required: true
+      perform-sign:
+        description: 'Sign NuGet packages'
+        type: boolean
+        required: true
+        default: false # Not setup yet.
+      dry-run:
+        description: 'true will *not* push packages to nuget.org'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  BUILD_CONFIGURATION: |-
+    ${{ case(
+      github.ref == 'refs/heads/main', 'Release',
+      github.ref == 'refs/heads/develop', 'Debug',
+      startsWith(github.ref, 'refs/heads/feature/'), 'Debug',
+      'Debug'
+    ) }}  
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  OUTPUT_DIRECTORY: ${{ github.workspace}}/artifacts/publish
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@v2.14.1
+      with:
+        egress-policy: audit
+
+    - name: 'Checkout'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: rickstaa/action-create-tag@v1
+      id: "tag_create"
+      with:
+        tag: 'v${{ inputs.tag }}'
+        tag_exists_error: false
+ 
+    - name: 'Result'
+      run: |
+        echo "Tag already present: ${{ steps.tag_create.outputs.tag_exists }}"
+  
+  build:  
+    name: 'Build'
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      attestations: write
+      id-token: write
+    timeout-minutes: 10
+
+    steps:    
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@v2.14.1
+      with:
+        egress-policy: audit
+    
+    - name: 'Checkout'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # avoid shallow clone
+        persist-credentials: true
+    
+    - name: 'Setup .NET'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          10.0.x
+        dotnet-quality: 'ga'
+
+    - name: 'Create Artifacts Folders'
+      run: |
+        mkdir -p ./artifacts/src/bin
+        mkdir -p ./artifacts/src/package
+        mkdir -p ./artifacts/src/package/debug
+        mkdir -p ./artifacts/src/package/release
+        mkdir -p ./artifacts/log
+        mkdir -p ./artifacts/publish
+        mkdir -p ./artifacts/reports
+        mkdir -p ./artifacts/test/bin
+    
+    - name: 'Restore dependencies'
+      run: dotnet restore
+    
+    - name: '.NET Build'
+      run: dotnet build Alkahest.Streams.slnx --no-restore -c ${{env.BUILD_CONFIGURATION}} -p:Version=${{ inputs.tag }}
+
+    - name: 'Test'
+      run: dotnet test --no-build  -c ${{env.BUILD_CONFIGURATION}} -- --report-xunit-trx --coverage --coverage-output-format cobertura
+
+    - name: 'Pack'
+      run: dotnet pack Alkahest.Streams.slnx -c ${{env.BUILD_CONFIGURATION}} -p:Version=${{ inputs.tag }} -o ${{ env.OUTPUT_DIRECTORY }}
+
+    - name: 'Extract SBOMs'
+      shell: pwsh
+      run: > 
+        Get-ChildItem -Path ${env:OUTPUT_DIRECTORY} -Filter *.nupkg -Force | ForEach-Object { 
+          Expand-Archive $_.FullName "$($_.DirectoryName)/$($_.Basename)" -Force 
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "${env:OUTPUT_DIRECTORY}/$($_.Basename).spdx.json"
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:OUTPUT_DIRECTORY}/$($_.Basename).spdx.json.sha256"
+          Remove-Item "$($_.DirectoryName)/$($_.Basename)" -Force -Recurse }
+
+    - name: 'Upload unsigned nupkgs to artifacts'
+      id: upload
+      uses: actions/upload-artifact@v6.0.0
+      with:
+        name: build-artifacts
+        path: ${{ env.OUTPUT_DIRECTORY }}/*
+        retention-days: 7
+
+    - name: Attest build artifacts
+      uses: actions/attest-build-provenance@v3.2.0
+      with:
+        subject-name: build-artifacts
+        # subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
+
+  sign:
+    name: Sign
+    needs: build
+    runs-on: windows-latest
+    if: ${{ inputs.perform-sign && inputs.dry-run == false && 1 == 0 }}
+    environment: release
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+
+    steps:
+    - name: 'Setup .NET'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          10.0.x
+        dotnet-quality: 'ga'
+
+    - name: 'Install Sign CLI'
+      run: dotnet tool install --tool-path ./sign --prerelease sign
+
+    - name: 'Download build artifacts'
+      uses: actions/download-artifact@v7.0.0
+      with:
+        name: build-artifacts
+        path : ${{ env.OUTPUT_DIRECTORY }}
+
+    - name: Authenticate to Azure
+      uses: Azure/login@v2.3.0
+      with:
+        allow-no-subscriptions : true
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Sign
+      shell: pwsh
+      run: >
+        ./sign/sign code azure-key-vault *.nupkg 
+        --base-directory ${env:OUTPUT_DIRECTORY} 
+        --azure-key-vault-url "${{ secrets.AZURE_KEY_VAULT_URL }}" 
+        --azure-key-vault-certificate "${{ secrets.AZURE_KEY_VAULT_CERTIFICATE }}"
+
+    - name: Upload signed nupkgs to artifacts
+      uses: actions/upload-artifact@v6.0.0
+      id: upload
+      with:
+        name: signed-artifacts
+        path: ${{env.OUTPUT_DIRECTORY}}/*
+        retention-days: 7
+
+    - name: Attest signed artifacts
+      uses: actions/attest-build-provenance@v3.2.0
+      with:
+        subject-name: signed-artifacts
+        subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
+
+  create-release:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    if: ${{ inputs.dry-run == false }}
+    environment: publish
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    
+    steps:
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@v2.14.1
+      with:
+        egress-policy: audit
+
+    - name: 'Setup .NET'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          10.0.x
+        dotnet-quality: 'ga'
+
+    - name: 'Download Artifacts'
+      uses: actions/download-artifact@v7.0.0
+      with:
+        name: |-
+          ${{ case(
+            inputs.perform-sign == true, 'signed-artifacts',
+            inputs.perform-sign == false, 'build-artifacts',
+            'build-artifacts'
+          ) }}
+
+    - name: 'Authenticate to NuGet.org'
+      uses: NuGet/login@v1
+      id: nugetlogin
+      with:
+        user: ${{secrets.NUGET_USERNAME}}
+
+      # Use --skip-duplicate to prevent errors if a package with the same version already exists.
+      # This allows a retory of a failed workflow, already published packages will be skipped without error.
+    - name: Publish NuGet packages
+      shell: pwsh
+      run: >
+        foreach($file in (Get-ChildItem "${env:OUTPUT_DIRECTORY}" -Recurse -Filter *.nupkg)) {
+          dotnet nuget push $file --api-key "${{ steps.nugetlogin.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        }
+        foreach($file in (Get-ChildItem "${env:OUTPUT_DIRECTORY}" -Recurse -Filter *.snupkg)) {
+          dotnet nuget push $file --api-key "${{ steps.nugetlogin.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        }
