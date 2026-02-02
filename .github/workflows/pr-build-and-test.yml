@@ -1,0 +1,141 @@
+name: 'PR Build & Test'
+
+on:
+  workflow_dispatch: 
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
+  pull_request:
+    branches: 
+      - main
+      - develop
+      - feature/*
+
+permissions:
+  contents: read
+
+env:
+  BUILD_CONFIGURATION: |-
+    ${{ case(
+      github.ref == 'refs/heads/main', 'Release',
+      github.ref == 'refs/heads/develop', 'Debug',
+      startsWith(github.ref, 'refs/heads/feature/'), 'Debug',
+      'Debug'
+    ) }}  
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: 'Build & Test'
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      issues: read
+      pull-requests: write
+      checks: write
+    timeout-minutes: 10
+
+    steps:    
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@v2.14.1
+      with:
+        egress-policy: audit
+    
+    - name: 'Checkout'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # avoid shallow clone
+        persist-credentials: true
+    
+    - name: 'Setup .NET'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          10.0.x
+        dotnet-quality: 'ga'
+
+    - name: 'Create Artifacts Folders'
+      run: |
+        mkdir -p ./artifacts/src/bin
+        mkdir -p ./artifacts/src/package
+        mkdir -p ./artifacts/src/package/debug
+        mkdir -p ./artifacts/src/package/release
+        mkdir -p ./artifacts/log
+        mkdir -p ./artifacts/publish
+        mkdir -p ./artifacts/reports
+        mkdir -p ./artifacts/test/bin
+    
+    - name: 'Restore dependencies'
+      run: dotnet restore
+    
+    - name: 'Build'
+      run: dotnet build Alkahest.Streams.slnx --no-restore -c ${{env.BUILD_CONFIGURATION}}
+
+    - name: 'Upload Build Artifacts'
+      uses: actions/upload-artifact@v5
+      with:
+        name: build-artifact
+        path: |
+          ${{ github.workspace }}/artifacts/src/**/*.nupkg
+          ${{ github.workspace }}/artifacts/src/**/*.snupkg
+          ${{ github.workspace }}/artifacts/src/**/Alkahest*.dll
+          ${{ github.workspace }}/artifacts/src/**/Alkahest*.deps.json
+          ${{ github.workspace }}/artifacts/src/**/Alkahest*.xml
+        retention-days: 5
+
+    - name: 'Test'
+      run: dotnet test --no-build  -c ${{env.BUILD_CONFIGURATION}} -- --report-xunit-trx --coverage --coverage-output-format cobertura
+       
+    - name: 'Generate .NET Code Coverage Report'
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.5.1
+      with:
+        reports: artifacts/test/**/*.cobertura.xml
+        targetdir: artifacts/reports
+        reporttypes: Cobertura
+        sourcedirs: src
+        title: 'Code Coverage'
+        tag: '${{ github.run_number }}_${{ github.run_id }}'
+        
+    - name: 'Upload Combined Coverage XML'
+      uses: actions/upload-artifact@v5
+      with:
+        name: coverage
+        path: ${{ github.workspace }}/artifacts/reports/Cobertura.xml
+        retention-days: 5
+
+    - name: 'Publish Code Coverage Report'
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: "artifacts/reports/Cobertura.xml"
+        badge: true
+        fail_below_min: false # just informative for now
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: false
+        indicators: true
+        output: both
+        thresholds: "10 30"
+        
+    - name: 'Add Coverage PR Comment'
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md
+    
+    - name: 'Upload Test Result Files'
+      uses: actions/upload-artifact@v5
+      with:
+        name: test-results
+        path: ${{ github.workspace }}/**/TestResults/**/*
+        retention-days: 5
+        
+    - name: 'Publish Test Results'
+      uses: EnricoMi/publish-unit-test-result-action@v2.21.0
+      if: always()
+      with:
+        # NOTE: using trx_files instead of files due to https://github.com/EnricoMi/publish-unit-test-result-action/issues/424
+        trx_files: "${{ github.workspace }}/artifacts/test/**/*.trx"
