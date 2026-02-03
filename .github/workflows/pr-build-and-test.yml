@@ -75,7 +75,7 @@ jobs:
       run: dotnet build Alkahest.Streams.slnx --no-restore -c ${{env.BUILD_CONFIGURATION}}
 
     - name: 'Upload Build Artifacts'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: build-artifact
         path: |
@@ -100,7 +100,7 @@ jobs:
         tag: '${{ github.run_number }}_${{ github.run_id }}'
         
     - name: 'Upload Combined Coverage XML'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: coverage
         path: ${{ github.workspace }}/artifacts/reports/Cobertura.xml
@@ -127,7 +127,7 @@ jobs:
         path: code-coverage-results.md
     
     - name: 'Upload Test Result Files'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: test-results
         path: ${{ github.workspace }}/**/TestResults/**/*
